@@ -373,7 +373,6 @@ export type Database = {
           full_name: string
           id: string
           motivation: string | null
-          password_hash: string
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["signup_status"]
@@ -385,7 +384,6 @@ export type Database = {
           full_name: string
           id?: string
           motivation?: string | null
-          password_hash: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["signup_status"]
@@ -397,7 +395,6 @@ export type Database = {
           full_name?: string
           id?: string
           motivation?: string | null
-          password_hash?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["signup_status"]
@@ -434,7 +431,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_email_approved: { Args: { _email: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
