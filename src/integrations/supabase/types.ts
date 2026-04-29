@@ -365,6 +365,45 @@ export type Database = {
           },
         ]
       }
+      signup_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          motivation: string | null
+          password_hash: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["signup_status"]
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          motivation?: string | null
+          password_hash: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["signup_status"]
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          motivation?: string | null
+          password_hash?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["signup_status"]
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -395,6 +434,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_email_approved: { Args: { _email: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
@@ -407,6 +447,7 @@ export type Database = {
         | "true_false"
         | "short"
         | "long"
+      signup_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -538,6 +579,7 @@ export const Constants = {
       content_kind: ["presentation", "reading", "link", "text", "video"],
       eval_mode: ["individual", "group"],
       question_kind: ["mcq_single", "mcq_multi", "true_false", "short", "long"],
+      signup_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
