@@ -10,6 +10,7 @@ interface AuthCtx {
   loading: boolean;
   roles: Role[];
   isStaff: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         roles,
         isStaff: roles.includes("admin") || roles.includes("instructor"),
+        isAdmin: roles.includes("admin"),
         signOut,
       }}
     >
