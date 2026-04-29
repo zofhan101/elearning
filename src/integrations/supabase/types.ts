@@ -14,16 +14,399 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      answers: {
+        Row: {
+          attempt_id: string
+          awarded_points: number | null
+          id: string
+          question_id: string
+          response: Json | null
+        }
+        Insert: {
+          attempt_id: string
+          awarded_points?: number | null
+          id?: string
+          question_id: string
+          response?: Json | null
+        }
+        Update: {
+          attempt_id?: string
+          awarded_points?: number | null
+          id?: string
+          question_id?: string
+          response?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attempts: {
+        Row: {
+          evaluation_id: string
+          id: string
+          max_score: number | null
+          score: number | null
+          started_at: string
+          submitted_at: string | null
+          user_id: string
+        }
+        Insert: {
+          evaluation_id: string
+          id?: string
+          max_score?: number | null
+          score?: number | null
+          started_at?: string
+          submitted_at?: string | null
+          user_id: string
+        }
+        Update: {
+          evaluation_id?: string
+          id?: string
+          max_score?: number | null
+          score?: number | null
+          started_at?: string
+          submitted_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attempts_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_blocks: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["content_kind"]
+          meta: string | null
+          module_id: string
+          position: number
+          section: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["content_kind"]
+          meta?: string | null
+          module_id: string
+          position?: number
+          section?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["content_kind"]
+          meta?: string | null
+          module_id?: string
+          position?: number
+          section?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_blocks_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          cover_color: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          group_label: string | null
+          id: string
+          instructor_name: string | null
+          is_open: boolean
+          offered_by: string | null
+          start_date: string | null
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          cover_color?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          group_label?: string | null
+          id?: string
+          instructor_name?: string | null
+          is_open?: boolean
+          offered_by?: string | null
+          start_date?: string | null
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          cover_color?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          group_label?: string | null
+          id?: string
+          instructor_name?: string | null
+          is_open?: boolean
+          offered_by?: string | null
+          start_date?: string | null
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      enrollments: {
+        Row: {
+          course_id: string
+          enrolled_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          enrolled_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          enrolled_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluations: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          mode: Database["public"]["Enums"]["eval_mode"]
+          scheduled_at: string | null
+          single_attempt: boolean
+          title: string
+          total_points: number
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          mode?: Database["public"]["Enums"]["eval_mode"]
+          scheduled_at?: string | null
+          single_attempt?: boolean
+          title: string
+          total_points?: number
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          mode?: Database["public"]["Enums"]["eval_mode"]
+          scheduled_at?: string | null
+          single_attempt?: boolean
+          title?: string
+          total_points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modules: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          position: number
+          start_date: string | null
+          title: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          position?: number
+          start_date?: string | null
+          title: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          position?: number
+          start_date?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          choices: Json | null
+          correct: Json | null
+          evaluation_id: string
+          id: string
+          kind: Database["public"]["Enums"]["question_kind"]
+          points: number
+          position: number
+          prompt: string
+        }
+        Insert: {
+          choices?: Json | null
+          correct?: Json | null
+          evaluation_id: string
+          id?: string
+          kind: Database["public"]["Enums"]["question_kind"]
+          points?: number
+          position?: number
+          prompt: string
+        }
+        Update: {
+          choices?: Json | null
+          correct?: Json | null
+          evaluation_id?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["question_kind"]
+          points?: number
+          position?: number
+          prompt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "instructor" | "student"
+      content_kind: "presentation" | "reading" | "link" | "text" | "video"
+      eval_mode: "individual" | "group"
+      question_kind:
+        | "mcq_single"
+        | "mcq_multi"
+        | "true_false"
+        | "short"
+        | "long"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +533,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "instructor", "student"],
+      content_kind: ["presentation", "reading", "link", "text", "video"],
+      eval_mode: ["individual", "group"],
+      question_kind: ["mcq_single", "mcq_multi", "true_false", "short", "long"],
+    },
   },
 } as const
