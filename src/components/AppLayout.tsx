@@ -1,11 +1,11 @@
 import { ReactNode } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { GraduationCap, LayoutDashboard, BookOpen, LogOut, User as UserIcon, Compass } from "lucide-react";
+import { GraduationCap, LayoutDashboard, BookOpen, LogOut, User as UserIcon, Compass, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { user, signOut, isStaff } = useAuth();
+  const { user, signOut, isStaff, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -30,6 +30,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <nav className="hidden md:flex items-center gap-1">
             <NavItem to="/" icon={<LayoutDashboard className="h-4 w-4" />} label="Mon parcours" />
             <NavItem to="/explorer" icon={<Compass className="h-4 w-4" />} label="Explorer" />
+            {isAdmin && (
+              <NavItem to="/admin/inscriptions" icon={<ShieldCheck className="h-4 w-4" />} label="Inscriptions" />
+            )}
           </nav>
 
           <div className="flex items-center gap-2">
