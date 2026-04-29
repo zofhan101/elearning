@@ -18,6 +18,7 @@ import EvaluationDetail from "./pages/EvaluationDetail";
 import Quiz from "./pages/Quiz";
 import QuizResult from "./pages/QuizResult";
 import NotFound from "./pages/NotFound";
+import AdminSignupRequests from "./pages/AdminSignupRequests";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/evaluation/:id" element={<RequireAuth><EvaluationDetail /></RequireAuth>} />
             <Route path="/quiz/:attemptId" element={<RequireAuth><Quiz /></RequireAuth>} />
             <Route path="/resultat/:attemptId" element={<RequireAuth><QuizResult /></RequireAuth>} />
+            <Route path="/admin/inscriptions" element={<RequireAuth><AdminSignupRequests /></RequireAuth>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
