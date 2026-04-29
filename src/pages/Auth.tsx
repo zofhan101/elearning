@@ -80,9 +80,8 @@ export default function AuthPage() {
 
         <div className="surface-card p-6">
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-            <TabsList className="grid grid-cols-2 w-full mb-6">
+            <TabsList className="grid grid-cols-1 w-full mb-6">
               <TabsTrigger value="signin">Connexion</TabsTrigger>
-              <TabsTrigger value="signup">Créer un compte</TabsTrigger>
             </TabsList>
 
             <form onSubmit={handleSubmit} className="space-y-4">
