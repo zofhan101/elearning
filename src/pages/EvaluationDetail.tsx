@@ -1,0 +1,134 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ChevronLeft, Clock, User, AlertCircle, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { AppLayout } from "@/components/AppLayout";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+export default function EvaluationDetail() {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [ev, setEv] = useState<any>(null);
+  const [questionsCount, setQ] = useState(0);
+  const [previousAttempt, setPrev] = useState<any>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data: e } = await supabase.from("evaluations").select("*").eq("id", id).maybeSingle();
+      setEv(e);
+      const { count } = await supabase.from("questions").select("id", { count: "exact", head: true }).eq("evaluation_id", id);
+      setQ(count ?? 0);
+      const { data: a } = await supabase
+        .from("attempts")
+        .select("*")
+        .eq("evaluation_id", id)
+        .eq("user_id", user!.id)
+        .order("started_at", { ascending: false })
+        .limit(1);
+      setPrev(a?.[0] ?? null);
+    })();
+  }, [id, user]);
+
+  const start = async () => {
+    const { data, error } = await supabase
+      .from("attempts")
+      .insert({ evaluation_id: id, user_id: user!.id, max_score: ev.total_points })
+      .select()
+      .single();
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    navigate(`/quiz/${data.id}`);
+  };
+
+  if (!ev) return null;
+  const submitted = previousAttempt?.submitted_at;
+  const blocked = submitted && ev.single_attempt;
+
+  return (
+    <AppLayout>
+      <div className="border-b border-border bg-card">
+        <div className="container py-4">
+          <Link to={`/cours/${ev.course_id}/evaluations`} className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            <ChevronLeft className="h-4 w-4" /> Évaluations
+          </Link>
+        </div>
+      </div>
+      <div className="container py-10 max-w-3xl">
+        <h1 className="text-3xl font-semibold">{ev.title}</h1>
+        <p className="text-muted-foreground mt-1">En ligne avec l'outil questionnaire</p>
+
+        <div className="flex flex-wrap gap-3 mt-6">
+          <Pill icon={<User className="h-3.5 w-3.5" />}>{ev.mode === "individual" ? "Individuel" : "Groupe"}</Pill>
+          {ev.scheduled_at && (
+            <Pill>
+              {new Date(ev.scheduled_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} —{" "}
+              {new Date(ev.scheduled_at).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
+            </Pill>
+          )}
+          <Pill icon={<Clock className="h-3.5 w-3.5" />}>Minuterie : {ev.duration_minutes} minutes</Pill>
+        </div>
+
+        <section className="surface-card p-6 mt-8">
+          <h2 className="font-semibold">Description</h2>
+          <p className="text-sm text-muted-foreground mt-2">{ev.description}</p>
+        </section>
+
+        <section className="surface-card p-6 mt-4">
+          <h2 className="font-semibold">Questionnaire</h2>
+          <p className="text-sm text-muted-foreground mt-1">{questionsCount} question{questionsCount > 1 ? "s" : ""}</p>
+        </section>
+
+        <section className="surface-card p-6 mt-4 space-y-3">
+          <h2 className="font-semibold">Déroulement</h2>
+          <Row strong={`${ev.duration_minutes} minutes pour répondre`} sub="Ce questionnaire est minuté." />
+          {ev.single_attempt && (
+            <Row strong="Un seul essai" sub="Une fois ce questionnaire soumis, il ne sera plus possible d'y répondre à nouveau." />
+          )}
+          <Row strong="Information supplémentaire" sub="Aucun document autorisé." />
+        </section>
+
+        <div className="mt-8 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          {blocked ? (
+            <div className="flex items-center gap-2 text-sm text-success">
+              <CheckCircle2 className="h-5 w-5" />
+              Vous avez déjà soumis ce questionnaire
+              {previousAttempt.score !== null && ` — score : ${previousAttempt.score}/${previousAttempt.max_score}`}
+            </div>
+          ) : (
+            <>
+              <Button size="lg" onClick={start} className="shadow-elevated">
+                {previousAttempt && !submitted ? "Reprendre le questionnaire" : "Essayer le questionnaire"}
+              </Button>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <AlertCircle className="h-3.5 w-3.5" /> La minuterie démarre dès le début de l'essai.
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
+
+function Pill({ children, icon }: any) {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-soft text-primary text-xs font-medium">
+      {icon}
+      {children}
+    </span>
+  );
+}
+function Row({ strong, sub }: any) {
+  return (
+    <div>
+      <div className="font-medium text-sm">{strong}</div>
+      <div className="text-sm text-muted-foreground">{sub}</div>
+    </div>
+  );
+}
