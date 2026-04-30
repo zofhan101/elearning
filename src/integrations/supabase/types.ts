@@ -365,6 +365,85 @@ export type Database = {
           },
         ]
       }
+      shared_files: {
+        Row: {
+          created_at: string
+          folder_id: string | null
+          id: string
+          mime_type: string | null
+          name: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          mime_type?: string | null
+          name: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          mime_type?: string | null
+          name?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_files_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "shared_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_folders: {
+        Row: {
+          audience: Database["public"]["Enums"]["share_audience"]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+        }
+        Insert: {
+          audience?: Database["public"]["Enums"]["share_audience"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+        }
+        Update: {
+          audience?: Database["public"]["Enums"]["share_audience"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "shared_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signup_requests: {
         Row: {
           admin_notes: string | null
@@ -431,6 +510,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      in_audience: {
+        Args: {
+          _audience: Database["public"]["Enums"]["share_audience"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
@@ -443,6 +529,7 @@ export type Database = {
         | "true_false"
         | "short"
         | "long"
+      share_audience: "teachers" | "students" | "staff_admin" | "all"
       signup_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -575,6 +662,7 @@ export const Constants = {
       content_kind: ["presentation", "reading", "link", "text", "video"],
       eval_mode: ["individual", "group"],
       question_kind: ["mcq_single", "mcq_multi", "true_false", "short", "long"],
+      share_audience: ["teachers", "students", "staff_admin", "all"],
       signup_status: ["pending", "approved", "rejected"],
     },
   },
