@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { GraduationCap, Info } from "lucide-react";
+import { Info } from "lucide-react";
+import logoFmm from "@/assets/logo-fmm.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -91,9 +92,8 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center gradient-soft p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex h-14 w-14 rounded-2xl gradient-hero items-center justify-center mb-4 shadow-elevated">
-            <GraduationCap className="h-7 w-7 text-primary-foreground" />
-          </div>
+          <img src={logoFmm} alt="Faculté de Médecine Antananarivo" className="h-20 w-20 mx-auto mb-4 object-contain" />
+          
           <h1 className="text-3xl font-semibold text-foreground">Faculté de Médecine Antananarivo</h1>
           <p className="text-muted-foreground mt-1">Votre espace pédagogique</p>
         </div>

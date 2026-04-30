@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { GraduationCap, LayoutDashboard, BookOpen, LogOut, User as UserIcon, Compass, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, BookOpen, LogOut, User as UserIcon, Compass, ShieldCheck } from "lucide-react";
+import logoFmm from "@/assets/logo-fmm.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
@@ -18,9 +19,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg gradient-hero flex items-center justify-center shadow-sm">
-              <GraduationCap className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img src={logoFmm} alt="Faculté de Médecine Antananarivo" className="h-10 w-10 object-contain" />
             <div className="leading-tight">
               <div className="font-semibold text-foreground text-base">Faculté de Médecine Antananarivo</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Espace pédagogique</div>
