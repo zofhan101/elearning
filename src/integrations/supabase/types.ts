@@ -434,7 +434,7 @@ export type Database = {
       is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "instructor" | "student"
+      app_role: "admin" | "instructor" | "student" | "staff_admin"
       content_kind: "presentation" | "reading" | "link" | "text" | "video"
       eval_mode: "individual" | "group"
       question_kind:
@@ -571,7 +571,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "instructor", "student"],
+      app_role: ["admin", "instructor", "student", "staff_admin"],
       content_kind: ["presentation", "reading", "link", "text", "video"],
       eval_mode: ["individual", "group"],
       question_kind: ["mcq_single", "mcq_multi", "true_false", "short", "long"],
