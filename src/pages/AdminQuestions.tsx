@@ -191,7 +191,7 @@ export default function AdminQuestions() {
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">{q.kind} · {q.points} pt</div>
                 <div className="text-sm" dangerouslySetInnerHTML={{ __html: q.prompt }} />
               </div>
-              <Button variant="outline" size="sm" onClick={() => setEditing(q) || setOpen(true)}>
+              <Button variant="outline" size="sm" onClick={() => { setEditing(q); setOpen(true); }}>
                 <Pencil className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="sm" className="text-destructive" onClick={() => remove(q.id)}>
