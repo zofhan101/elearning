@@ -198,7 +198,7 @@ export default function AuthPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Brio, une initiative pédagogique inspirée de l'Université Laval.
+          Faculté de Médecine Antananarivo — Espace pédagogique.
         </p>
       </div>
     </div>
