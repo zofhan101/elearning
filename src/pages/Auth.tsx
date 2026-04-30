@@ -94,7 +94,7 @@ export default function AuthPage() {
           <div className="inline-flex h-14 w-14 rounded-2xl gradient-hero items-center justify-center mb-4 shadow-elevated">
             <GraduationCap className="h-7 w-7 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-semibold text-foreground">Brio</h1>
+          <h1 className="text-3xl font-semibold text-foreground">Faculté de Médecine Antananarivo</h1>
           <p className="text-muted-foreground mt-1">Votre espace pédagogique</p>
         </div>
 

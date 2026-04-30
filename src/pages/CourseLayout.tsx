@@ -19,7 +19,7 @@ export default function CourseLayout() {
       <div className="border-b border-border bg-card">
         <div className="container py-4 flex items-center gap-3">
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-            <ChevronLeft className="h-4 w-4" /> Mon espace Brio
+            <ChevronLeft className="h-4 w-4" /> Mon espace
           </Link>
           <span className="text-muted-foreground">·</span>
           <span className="text-sm font-medium truncate">{course?.title ?? "…"}</span>
