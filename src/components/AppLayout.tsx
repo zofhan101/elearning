@@ -22,7 +22,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
             <div className="leading-tight">
-              <div className="font-semibold text-foreground text-base">Brio</div>
+              <div className="font-semibold text-foreground text-base">Faculté de Médecine Antananarivo</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Espace pédagogique</div>
             </div>
           </Link>
@@ -63,7 +63,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <span>Conditions d'utilisation</span>
             <span>Confidentialité et témoins</span>
           </div>
-          <div>Brio, une initiative pédagogique · Français</div>
+          <div>Faculté de Médecine Antananarivo · Français</div>
         </div>
       </footer>
     </div>
