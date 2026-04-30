@@ -1,9 +1,10 @@
 import { ReactNode } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, BookOpen, LogOut, User as UserIcon, Compass, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, FolderKanban, Settings, ChevronDown } from "lucide-react";
 import logoFmm from "@/assets/logo-fmm.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, signOut, isStaff, isAdmin } = useAuth();
@@ -29,8 +30,25 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <nav className="hidden md:flex items-center gap-1">
             <NavItem to="/" icon={<LayoutDashboard className="h-4 w-4" />} label="Mon parcours" />
             <NavItem to="/explorer" icon={<Compass className="h-4 w-4" />} label="Explorer" />
-            {isAdmin && (
-              <NavItem to="/admin/inscriptions" icon={<ShieldCheck className="h-4 w-4" />} label="Inscriptions" />
+            <NavItem to="/echanges" icon={<FolderKanban className="h-4 w-4" />} label="Échanges" />
+            {isStaff && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                    <Settings className="h-4 w-4" />
+                    Administration
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate("/admin/cours")}>Cours & contenus</DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate("/admin/inscriptions")}>
+                      <ShieldCheck className="h-4 w-4 mr-2" />Demandes d'inscription
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </nav>
 
