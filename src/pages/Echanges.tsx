@@ -338,7 +338,7 @@ export default function Echanges() {
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="grid gap-2 md:grid-cols-2">
             {folders.map((f) => (
-              <DroppableFolder key={f.id} folder={f} onOpen={() => openFolder(f)} onDelete={() => removeFolder(f.id)} />
+              <DroppableFolder key={f.id} folder={f} canWrite={canWriteAudience(f.audience)} onOpen={() => openFolder(f)} onDelete={() => removeFolder(f.id)} />
             ))}
           </div>
 
