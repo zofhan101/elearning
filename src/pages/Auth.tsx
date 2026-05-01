@@ -114,7 +114,7 @@ export default function AuthPage() {
                     type="email"
                     value={signin.email}
                     onChange={(e) => setSignin({ ...signin, email: e.target.value })}
-                    placeholder="vous@exemple.ca"
+                    placeholder="vous@univ-antananarivo.mg"
                     required
                   />
                 </div>
@@ -173,7 +173,7 @@ export default function AuthPage() {
                         type="email"
                         value={request.email}
                         onChange={(e) => setRequest({ ...request, email: e.target.value })}
-                        placeholder="vous@exemple.ca"
+                        placeholder="vous@univ-antananarivo.mg"
                         required
                       />
                     </div>
