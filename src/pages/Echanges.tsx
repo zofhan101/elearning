@@ -250,25 +250,19 @@ export default function Echanges() {
     if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
   };
 
-  // Permissions matrix
+  // Permissions matrix (échanges croisés activés)
   // - Admin : tout
-  // - Enseignant (isStaff hors admin pur) : écriture si audience ∈ {teachers, all}
-  // - PAT (staff_admin) : écriture si audience ∈ {staff_admin, all}
+  // - Enseignant : écriture sur toutes les audiences (teachers, students, staff_admin, all)
+  // - PAT (staff_admin) : écriture sur toutes les audiences
   // - Étudiant : lecture + download uniquement
   const canWriteAudience = (a: Audience) => {
     if (isAdmin) return true;
-    if (isInstructor && (a === "teachers" || a === "all")) return true;
-    if (isStaffAdmin && (a === "staff_admin" || a === "all")) return true;
+    if (isInstructor || isStaffAdmin) return true;
     return false;
   };
   const canWriteCurrentFolder = currentFolder ? canWriteAudience(currentFolder.audience) : false;
-  // Audiences pour lesquelles l'utilisateur peut créer un dossier
-  const creatableAudiences: Audience[] = isAdmin
-    ? ["all", "teachers", "students", "staff_admin"]
-    : [
-        ...(isInstructor ? (["teachers", "all"] as Audience[]) : []),
-        ...(isStaffAdmin ? (["staff_admin", "all"] as Audience[]) : []),
-      ].filter((v, i, arr) => arr.indexOf(v) === i);
+  const allAudiences: Audience[] = ["all", "teachers", "students", "staff_admin"];
+  const creatableAudiences: Audience[] = isAdmin || isInstructor || isStaffAdmin ? allAudiences : [];
   const canCreateFolder = creatableAudiences.length > 0;
 
   return (
