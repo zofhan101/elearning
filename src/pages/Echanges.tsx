@@ -297,10 +297,10 @@ export default function Echanges() {
                       <Select value={newFolder.audience} onValueChange={(v: Audience) => setNewFolder({ ...newFolder, audience: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Tout le monde</SelectItem>
-                          <SelectItem value="teachers">Enseignants</SelectItem>
-                          <SelectItem value="students">Étudiants</SelectItem>
-                          <SelectItem value="staff_admin">Personnel administratif & technique</SelectItem>
+                          {creatableAudiences.includes("all") && <SelectItem value="all">Tout le monde</SelectItem>}
+                          {creatableAudiences.includes("teachers") && <SelectItem value="teachers">Enseignants</SelectItem>}
+                          {creatableAudiences.includes("students") && <SelectItem value="students">Étudiants</SelectItem>}
+                          {creatableAudiences.includes("staff_admin") && <SelectItem value="staff_admin">Personnel administratif & technique</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
