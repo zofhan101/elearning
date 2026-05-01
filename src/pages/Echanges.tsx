@@ -129,7 +129,7 @@ function DroppableFolder({ folder, canWrite, onOpen, onDelete }: { folder: SFold
 }
 
 export default function Echanges() {
-  const { user, isAdmin, isStaff, isStaffAdmin } = useAuth();
+  const { user, isAdmin, isInstructor, isStaffAdmin } = useAuth();
   const [currentFolder, setCurrentFolder] = useState<SFolder | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<SFolder[]>([]);
   const [folders, setFolders] = useState<SFolder[]>([]);
