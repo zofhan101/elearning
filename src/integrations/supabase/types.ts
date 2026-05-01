@@ -503,6 +503,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_write_audience: {
+        Args: {
+          _audience: Database["public"]["Enums"]["share_audience"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
