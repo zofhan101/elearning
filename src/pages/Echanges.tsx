@@ -312,7 +312,7 @@ export default function Echanges() {
                 </DialogContent>
               </Dialog>
             )}
-            {currentFolder && (
+            {currentFolder && canWriteCurrentFolder && (
               <>
                 <input ref={fileInputRef} type="file" multiple hidden onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
                 <Button onClick={() => fileInputRef.current?.click()}>
