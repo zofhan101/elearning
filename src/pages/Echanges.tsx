@@ -344,14 +344,20 @@ export default function Echanges() {
 
           {currentFolder && (
             <div
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-              className={`mt-6 rounded-xl border-2 border-dashed p-4 transition-colors ${dragOverDrop ? "border-primary bg-primary-soft" : "border-border"}`}
+              onDragOver={canWriteCurrentFolder ? onDragOver : undefined}
+              onDragLeave={canWriteCurrentFolder ? onDragLeave : undefined}
+              onDrop={canWriteCurrentFolder ? onDrop : undefined}
+              className={`mt-6 rounded-xl border-2 ${canWriteCurrentFolder ? "border-dashed" : "border-solid"} p-4 transition-colors ${dragOverDrop ? "border-primary bg-primary-soft" : "border-border"}`}
             >
-              <div className="text-xs text-muted-foreground mb-3 text-center">
-                Glissez-déposez vos fichiers ici pour les téléverser
-              </div>
+              {canWriteCurrentFolder ? (
+                <div className="text-xs text-muted-foreground mb-3 text-center">
+                  Glissez-déposez vos fichiers ici pour les téléverser
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground mb-3 text-center">
+                  Lecture seule — vous pouvez télécharger les fichiers de ce dossier.
+                </div>
+              )}
               <div className="grid gap-2">
                 {files.map((f) => (
                   <DraggableFile key={f.id} file={f} canWrite={canWriteCurrentFolder} onDelete={() => removeFile(f)} onDownload={() => download(f)} />
