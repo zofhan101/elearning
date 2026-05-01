@@ -74,15 +74,23 @@ function formatSize(b: number | null) {
   return `${(b / 1024 / 1024).toFixed(1)} Mo`;
 }
 
-function DraggableFile({ file, onDelete, onDownload }: { file: SFile; onDelete: () => void; onDownload: () => void }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `file-${file.id}`, data: { fileId: file.id } });
+function DraggableFile({ file, canWrite, onDelete, onDownload }: { file: SFile; canWrite: boolean; onDelete: () => void; onDownload: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `file-${file.id}`,
+    data: { fileId: file.id },
+    disabled: !canWrite,
+  });
   return (
     <div
       ref={setNodeRef}
       style={{ opacity: isDragging ? 0.4 : 1 }}
       className="surface-card p-3 flex items-center gap-3 hover:border-primary/40 transition-colors"
     >
-      <button className="cursor-grab active:cursor-grabbing text-muted-foreground" {...attributes} {...listeners}>
+      <button
+        className={`text-muted-foreground ${canWrite ? "cursor-grab active:cursor-grabbing" : "cursor-default opacity-60"}`}
+        {...(canWrite ? attributes : {})}
+        {...(canWrite ? listeners : {})}
+      >
         <FileIcon className="h-5 w-5" />
       </button>
       <div className="flex-1 min-w-0">
@@ -90,12 +98,14 @@ function DraggableFile({ file, onDelete, onDownload }: { file: SFile; onDelete: 
         <div className="text-xs text-muted-foreground">{file.mime_type ?? "—"} · {formatSize(file.size_bytes)}</div>
       </div>
       <Button variant="ghost" size="icon" onClick={onDownload}><Download className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+      {canWrite && (
+        <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+      )}
     </div>
   );
 }
 
-function DroppableFolder({ folder, onOpen, onDelete }: { folder: SFolder; onOpen: () => void; onDelete: () => void }) {
+function DroppableFolder({ folder, canWrite, onOpen, onDelete }: { folder: SFolder; canWrite: boolean; onOpen: () => void; onDelete: () => void }) {
   const { isOver, setNodeRef } = useDroppable({ id: `folder-${folder.id}`, data: { folderId: folder.id } });
   const Icon = audienceIcon[folder.audience];
   return (
@@ -111,7 +121,9 @@ function DroppableFolder({ folder, onOpen, onDelete }: { folder: SFolder; onOpen
           <Icon className="h-3 w-3" />{audienceLabel[folder.audience]}
         </div>
       </div>
-      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+      {canWrite && (
+        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+      )}
     </div>
   );
 }
