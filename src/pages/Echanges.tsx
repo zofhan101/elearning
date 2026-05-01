@@ -74,15 +74,23 @@ function formatSize(b: number | null) {
   return `${(b / 1024 / 1024).toFixed(1)} Mo`;
 }
 
-function DraggableFile({ file, onDelete, onDownload }: { file: SFile; onDelete: () => void; onDownload: () => void }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `file-${file.id}`, data: { fileId: file.id } });
+function DraggableFile({ file, canWrite, onDelete, onDownload }: { file: SFile; canWrite: boolean; onDelete: () => void; onDownload: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `file-${file.id}`,
+    data: { fileId: file.id },
+    disabled: !canWrite,
+  });
   return (
     <div
       ref={setNodeRef}
       style={{ opacity: isDragging ? 0.4 : 1 }}
       className="surface-card p-3 flex items-center gap-3 hover:border-primary/40 transition-colors"
     >
-      <button className="cursor-grab active:cursor-grabbing text-muted-foreground" {...attributes} {...listeners}>
+      <button
+        className={`text-muted-foreground ${canWrite ? "cursor-grab active:cursor-grabbing" : "cursor-default opacity-60"}`}
+        {...(canWrite ? attributes : {})}
+        {...(canWrite ? listeners : {})}
+      >
         <FileIcon className="h-5 w-5" />
       </button>
       <div className="flex-1 min-w-0">
@@ -90,12 +98,14 @@ function DraggableFile({ file, onDelete, onDownload }: { file: SFile; onDelete: 
         <div className="text-xs text-muted-foreground">{file.mime_type ?? "—"} · {formatSize(file.size_bytes)}</div>
       </div>
       <Button variant="ghost" size="icon" onClick={onDownload}><Download className="h-4 w-4" /></Button>
-      <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+      {canWrite && (
+        <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+      )}
     </div>
   );
 }
 
-function DroppableFolder({ folder, onOpen, onDelete }: { folder: SFolder; onOpen: () => void; onDelete: () => void }) {
+function DroppableFolder({ folder, canWrite, onOpen, onDelete }: { folder: SFolder; canWrite: boolean; onOpen: () => void; onDelete: () => void }) {
   const { isOver, setNodeRef } = useDroppable({ id: `folder-${folder.id}`, data: { folderId: folder.id } });
   const Icon = audienceIcon[folder.audience];
   return (
@@ -111,13 +121,15 @@ function DroppableFolder({ folder, onOpen, onDelete }: { folder: SFolder; onOpen
           <Icon className="h-3 w-3" />{audienceLabel[folder.audience]}
         </div>
       </div>
-      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+      {canWrite && (
+        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+      )}
     </div>
   );
 }
 
 export default function Echanges() {
-  const { user, isAdmin, isStaff, isStaffAdmin } = useAuth();
+  const { user, isAdmin, isInstructor, isStaffAdmin } = useAuth();
   const [currentFolder, setCurrentFolder] = useState<SFolder | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<SFolder[]>([]);
   const [folders, setFolders] = useState<SFolder[]>([]);
@@ -238,7 +250,26 @@ export default function Echanges() {
     if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
   };
 
-  const canCreateFolder = isAdmin || isStaff || isStaffAdmin;
+  // Permissions matrix
+  // - Admin : tout
+  // - Enseignant (isStaff hors admin pur) : écriture si audience ∈ {teachers, all}
+  // - PAT (staff_admin) : écriture si audience ∈ {staff_admin, all}
+  // - Étudiant : lecture + download uniquement
+  const canWriteAudience = (a: Audience) => {
+    if (isAdmin) return true;
+    if (isInstructor && (a === "teachers" || a === "all")) return true;
+    if (isStaffAdmin && (a === "staff_admin" || a === "all")) return true;
+    return false;
+  };
+  const canWriteCurrentFolder = currentFolder ? canWriteAudience(currentFolder.audience) : false;
+  // Audiences pour lesquelles l'utilisateur peut créer un dossier
+  const creatableAudiences: Audience[] = isAdmin
+    ? ["all", "teachers", "students", "staff_admin"]
+    : [
+        ...(isInstructor ? (["teachers", "all"] as Audience[]) : []),
+        ...(isStaffAdmin ? (["staff_admin", "all"] as Audience[]) : []),
+      ].filter((v, i, arr) => arr.indexOf(v) === i);
+  const canCreateFolder = creatableAudiences.length > 0;
 
   return (
     <AppLayout>
@@ -266,10 +297,10 @@ export default function Echanges() {
                       <Select value={newFolder.audience} onValueChange={(v: Audience) => setNewFolder({ ...newFolder, audience: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Tout le monde</SelectItem>
-                          <SelectItem value="teachers">Enseignants</SelectItem>
-                          <SelectItem value="students">Étudiants</SelectItem>
-                          <SelectItem value="staff_admin">Personnel administratif & technique</SelectItem>
+                          {creatableAudiences.includes("all") && <SelectItem value="all">Tout le monde</SelectItem>}
+                          {creatableAudiences.includes("teachers") && <SelectItem value="teachers">Enseignants</SelectItem>}
+                          {creatableAudiences.includes("students") && <SelectItem value="students">Étudiants</SelectItem>}
+                          {creatableAudiences.includes("staff_admin") && <SelectItem value="staff_admin">Personnel administratif & technique</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
@@ -281,7 +312,7 @@ export default function Echanges() {
                 </DialogContent>
               </Dialog>
             )}
-            {currentFolder && (
+            {currentFolder && canWriteCurrentFolder && (
               <>
                 <input ref={fileInputRef} type="file" multiple hidden onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
                 <Button onClick={() => fileInputRef.current?.click()}>
@@ -307,23 +338,29 @@ export default function Echanges() {
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="grid gap-2 md:grid-cols-2">
             {folders.map((f) => (
-              <DroppableFolder key={f.id} folder={f} onOpen={() => openFolder(f)} onDelete={() => removeFolder(f.id)} />
+              <DroppableFolder key={f.id} folder={f} canWrite={canWriteAudience(f.audience)} onOpen={() => openFolder(f)} onDelete={() => removeFolder(f.id)} />
             ))}
           </div>
 
           {currentFolder && (
             <div
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-              className={`mt-6 rounded-xl border-2 border-dashed p-4 transition-colors ${dragOverDrop ? "border-primary bg-primary-soft" : "border-border"}`}
+              onDragOver={canWriteCurrentFolder ? onDragOver : undefined}
+              onDragLeave={canWriteCurrentFolder ? onDragLeave : undefined}
+              onDrop={canWriteCurrentFolder ? onDrop : undefined}
+              className={`mt-6 rounded-xl border-2 ${canWriteCurrentFolder ? "border-dashed" : "border-solid"} p-4 transition-colors ${dragOverDrop ? "border-primary bg-primary-soft" : "border-border"}`}
             >
-              <div className="text-xs text-muted-foreground mb-3 text-center">
-                Glissez-déposez vos fichiers ici pour les téléverser
-              </div>
+              {canWriteCurrentFolder ? (
+                <div className="text-xs text-muted-foreground mb-3 text-center">
+                  Glissez-déposez vos fichiers ici pour les téléverser
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground mb-3 text-center">
+                  Lecture seule — vous pouvez télécharger les fichiers de ce dossier.
+                </div>
+              )}
               <div className="grid gap-2">
                 {files.map((f) => (
-                  <DraggableFile key={f.id} file={f} onDelete={() => removeFile(f)} onDownload={() => download(f)} />
+                  <DraggableFile key={f.id} file={f} canWrite={canWriteCurrentFolder} onDelete={() => removeFile(f)} onDownload={() => download(f)} />
                 ))}
                 {files.length === 0 && (
                   <div className="text-center text-sm text-muted-foreground py-6">Aucun fichier dans ce dossier.</div>
