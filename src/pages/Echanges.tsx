@@ -260,6 +260,62 @@ export default function Echanges() {
     if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
   };
 
+  const openShare = (kind: "file" | "folder", item: SFile | SFolder) => {
+    if (kind === "folder") setShareAudience((item as SFolder).audience);
+    else setShareAudience("teachers");
+    setShareTarget({ kind, item });
+  };
+
+  const findOrCreateRootFolderForAudience = async (audience: Audience): Promise<string | null> => {
+    if (!user) return null;
+    const { data: existing } = await supabase
+      .from("shared_folders")
+      .select("*")
+      .is("parent_id", null)
+      .eq("audience", audience)
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (existing && existing.length > 0) return (existing[0] as any).id;
+    const defaultName: Record<Audience, string> = {
+      teachers: "Espace Enseignants",
+      students: "Espace Étudiants",
+      staff_admin: "Espace Personnel adm. & technique",
+      all: "Espace partagé",
+    };
+    const { data: created, error } = await supabase
+      .from("shared_folders")
+      .insert({ name: defaultName[audience], audience, parent_id: null, created_by: user.id })
+      .select()
+      .single();
+    if (error) { toast.error(error.message); return null; }
+    return (created as any).id;
+  };
+
+  const confirmShare = async () => {
+    if (!shareTarget) return;
+    if (shareTarget.kind === "folder") {
+      const folder = shareTarget.item as SFolder;
+      const { error } = await supabase
+        .from("shared_folders")
+        .update({ audience: shareAudience })
+        .eq("id", folder.id);
+      if (error) return toast.error(error.message);
+      toast.success(`Dossier partagé avec : ${audienceLabel[shareAudience]}`);
+    } else {
+      const file = shareTarget.item as SFile;
+      const targetFolderId = await findOrCreateRootFolderForAudience(shareAudience);
+      if (!targetFolderId) return;
+      const { error } = await supabase
+        .from("shared_files")
+        .update({ folder_id: targetFolderId })
+        .eq("id", file.id);
+      if (error) return toast.error(error.message);
+      toast.success(`Fichier partagé avec : ${audienceLabel[shareAudience]}`);
+    }
+    setShareTarget(null);
+    load();
+  };
+
   // Permissions matrix (échanges croisés activés)
   // - Admin : tout
   // - Enseignant : écriture sur toutes les audiences (teachers, students, staff_admin, all)
