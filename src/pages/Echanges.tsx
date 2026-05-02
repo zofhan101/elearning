@@ -434,6 +434,45 @@ export default function Echanges() {
             </div>
           )}
         </DndContext>
+
+        <Dialog open={!!shareTarget} onOpenChange={(o) => !o && setShareTarget(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Partager {shareTarget?.kind === "folder" ? "le dossier" : "le fichier"} « {shareTarget?.item.name} »
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label>Choisissez le groupe destinataire</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["teachers", "students", "staff_admin", "all"] as Audience[]).map((a) => {
+                  const Icon = audienceIcon[a];
+                  const selected = shareAudience === a;
+                  return (
+                    <button
+                      key={a}
+                      onClick={() => setShareAudience(a)}
+                      className={`surface-card p-3 flex items-center gap-2 text-left transition-colors ${selected ? "border-primary bg-primary-soft" : "hover:border-primary/40"}`}
+                    >
+                      <Icon className="h-4 w-4 text-primary" />
+                      <span className="flex-1 text-sm">{audienceLabel[a]}</span>
+                      {selected && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground pt-2">
+                {shareTarget?.kind === "folder"
+                  ? "Le dossier deviendra visible et modifiable selon les droits du groupe sélectionné."
+                  : "Le fichier sera déplacé vers le dossier racine de ce groupe (créé automatiquement si nécessaire)."}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShareTarget(null)}>Annuler</Button>
+              <Button onClick={confirmShare}>Partager</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
