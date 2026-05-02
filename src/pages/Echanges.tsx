@@ -110,7 +110,7 @@ function DraggableFile({ file, canWrite, onDelete, onDownload, onShare }: { file
   );
 }
 
-function DroppableFolder({ folder, canWrite, onOpen, onDelete }: { folder: SFolder; canWrite: boolean; onOpen: () => void; onDelete: () => void }) {
+function DroppableFolder({ folder, canWrite, onOpen, onDelete, onShare }: { folder: SFolder; canWrite: boolean; onOpen: () => void; onDelete: () => void; onShare: () => void }) {
   const { isOver, setNodeRef } = useDroppable({ id: `folder-${folder.id}`, data: { folderId: folder.id } });
   const Icon = audienceIcon[folder.audience];
   return (
@@ -126,6 +126,9 @@ function DroppableFolder({ folder, canWrite, onOpen, onDelete }: { folder: SFold
           <Icon className="h-3 w-3" />{audienceLabel[folder.audience]}
         </div>
       </div>
+      {canWrite && (
+        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onShare(); }} title="Partager avec"><Share2 className="h-4 w-4" /></Button>
+      )}
       {canWrite && (
         <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
       )}
