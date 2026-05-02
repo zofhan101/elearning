@@ -420,7 +420,7 @@ export default function Echanges() {
               )}
               <div className="grid gap-2">
                 {files.map((f) => (
-                  <DraggableFile key={f.id} file={f} canWrite={canWriteCurrentFolder} onDelete={() => removeFile(f)} onDownload={() => download(f)} />
+                  <DraggableFile key={f.id} file={f} canWrite={canWriteCurrentFolder} onDelete={() => removeFile(f)} onDownload={() => download(f)} onShare={() => openShare("file", f)} />
                 ))}
                 {files.length === 0 && (
                   <div className="text-center text-sm text-muted-foreground py-6">Aucun fichier dans ce dossier.</div>
