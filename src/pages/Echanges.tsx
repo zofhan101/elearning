@@ -76,7 +76,7 @@ function formatSize(b: number | null) {
   return `${(b / 1024 / 1024).toFixed(1)} Mo`;
 }
 
-function DraggableFile({ file, canWrite, onDelete, onDownload }: { file: SFile; canWrite: boolean; onDelete: () => void; onDownload: () => void }) {
+function DraggableFile({ file, canWrite, onDelete, onDownload, onShare }: { file: SFile; canWrite: boolean; onDelete: () => void; onDownload: () => void; onShare: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `file-${file.id}`,
     data: { fileId: file.id },
@@ -100,6 +100,9 @@ function DraggableFile({ file, canWrite, onDelete, onDownload }: { file: SFile; 
         <div className="text-xs text-muted-foreground">{file.mime_type ?? "—"} · {formatSize(file.size_bytes)}</div>
       </div>
       <Button variant="ghost" size="icon" onClick={onDownload}><Download className="h-4 w-4" /></Button>
+      {canWrite && (
+        <Button variant="ghost" size="icon" onClick={onShare} title="Partager avec"><Share2 className="h-4 w-4" /></Button>
+      )}
       {canWrite && (
         <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
       )}
