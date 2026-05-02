@@ -145,6 +145,8 @@ export default function Echanges() {
   const [openNew, setOpenNew] = useState(false);
   const [newFolder, setNewFolder] = useState<{ name: string; audience: Audience }>({ name: "", audience: "all" });
   const [dragOverDrop, setDragOverDrop] = useState(false);
+  const [shareTarget, setShareTarget] = useState<{ kind: "file" | "folder"; item: SFile | SFolder } | null>(null);
+  const [shareAudience, setShareAudience] = useState<Audience>("teachers");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
