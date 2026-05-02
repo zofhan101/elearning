@@ -23,6 +23,8 @@ import {
   Briefcase,
   Globe,
   File as FileIcon,
+  Share2,
+  Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
