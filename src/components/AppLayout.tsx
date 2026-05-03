@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, FolderKanban, Settings, ChevronDown } from "lucide-react";
+import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, FolderKanban, Settings, ChevronDown, IdCard } from "lucide-react";
 import logoFmm from "@/assets/logo-fmm.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <NavItem to="/" icon={<LayoutDashboard className="h-4 w-4" />} label="Mon parcours" />
             <NavItem to="/explorer" icon={<Compass className="h-4 w-4" />} label="Explorer" />
             <NavItem to="/echanges" icon={<FolderKanban className="h-4 w-4" />} label="Échanges" />
+            <NavItem to="/personnel" icon={<IdCard className="h-4 w-4" />} label="Mon dossier" />
             {isStaff && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

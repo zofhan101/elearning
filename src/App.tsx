@@ -26,6 +26,7 @@ import AdminContents from "./pages/AdminContents";
 import AdminEvaluations from "./pages/AdminEvaluations";
 import AdminQuestions from "./pages/AdminQuestions";
 import Echanges from "./pages/Echanges";
+import Personnel from "./pages/Personnel";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
             <Route path="/explorer" element={<RequireAuth><Explorer /></RequireAuth>} />
             <Route path="/echanges" element={<RequireAuth><Echanges /></RequireAuth>} />
+            <Route path="/personnel" element={<RequireAuth><Personnel /></RequireAuth>} />
             <Route path="/cours/:id" element={<RequireAuth><CourseLayout /></RequireAuth>}>
               <Route index element={<CourseInfo />} />
               <Route path="renseignements" element={<CourseInfo />} />

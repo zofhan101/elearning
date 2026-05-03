@@ -300,6 +300,60 @@ export type Database = {
           },
         ]
       }
+      personnel: {
+        Row: {
+          adresse: string | null
+          created_at: string
+          date_naissance: string | null
+          email_institutionnel: string | null
+          email_personnel: string | null
+          id: string
+          matricule: string | null
+          mention: Database["public"]["Enums"]["mention_type"] | null
+          mere: string | null
+          niveau: Database["public"]["Enums"]["niveau_etude"] | null
+          nom: string | null
+          parcours: Database["public"]["Enums"]["parcours_type"] | null
+          pere: string | null
+          prenom: string | null
+          updated_at: string
+        }
+        Insert: {
+          adresse?: string | null
+          created_at?: string
+          date_naissance?: string | null
+          email_institutionnel?: string | null
+          email_personnel?: string | null
+          id: string
+          matricule?: string | null
+          mention?: Database["public"]["Enums"]["mention_type"] | null
+          mere?: string | null
+          niveau?: Database["public"]["Enums"]["niveau_etude"] | null
+          nom?: string | null
+          parcours?: Database["public"]["Enums"]["parcours_type"] | null
+          pere?: string | null
+          prenom?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string | null
+          created_at?: string
+          date_naissance?: string | null
+          email_institutionnel?: string | null
+          email_personnel?: string | null
+          id?: string
+          matricule?: string | null
+          mention?: Database["public"]["Enums"]["mention_type"] | null
+          mere?: string | null
+          niveau?: Database["public"]["Enums"]["niveau_etude"] | null
+          nom?: string | null
+          parcours?: Database["public"]["Enums"]["parcours_type"] | null
+          pere?: string | null
+          prenom?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -530,6 +584,21 @@ export type Database = {
       app_role: "admin" | "instructor" | "student" | "staff_admin"
       content_kind: "presentation" | "reading" | "link" | "text" | "video"
       eval_mode: "individual" | "group"
+      mention_type:
+        | "medecine_humaine"
+        | "pharmacie"
+        | "medecine_veterinaire"
+        | "sciences_paramedicales"
+      niveau_etude: "L1" | "L2" | "L3" | "A4" | "A5" | "A6" | "A7" | "A8"
+      parcours_type:
+        | "anesthesie"
+        | "maieutique"
+        | "infirmier_generaliste"
+        | "massokinesitherapie"
+        | "ergotherapie"
+        | "technique_appareillage"
+        | "technique_laboratoire"
+        | "electroradiologie"
       question_kind:
         | "mcq_single"
         | "mcq_multi"
@@ -668,6 +737,23 @@ export const Constants = {
       app_role: ["admin", "instructor", "student", "staff_admin"],
       content_kind: ["presentation", "reading", "link", "text", "video"],
       eval_mode: ["individual", "group"],
+      mention_type: [
+        "medecine_humaine",
+        "pharmacie",
+        "medecine_veterinaire",
+        "sciences_paramedicales",
+      ],
+      niveau_etude: ["L1", "L2", "L3", "A4", "A5", "A6", "A7", "A8"],
+      parcours_type: [
+        "anesthesie",
+        "maieutique",
+        "infirmier_generaliste",
+        "massokinesitherapie",
+        "ergotherapie",
+        "technique_appareillage",
+        "technique_laboratoire",
+        "electroradiologie",
+      ],
       question_kind: ["mcq_single", "mcq_multi", "true_false", "short", "long"],
       share_audience: ["teachers", "students", "staff_admin", "all"],
       signup_status: ["pending", "approved", "rejected"],
