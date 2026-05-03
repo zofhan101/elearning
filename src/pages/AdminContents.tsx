@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, ChevronLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, Upload, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,32 @@ export default function AdminContents() {
   const [moduleTitle, setModuleTitle] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Block>>({ title: "", kind: "text", body: "" });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    try {
+      const safe = file.name.replace(/[^\w.\-]+/g, "_");
+      const path = `${moduleId}/${Date.now()}_${safe}`;
+      const { error } = await supabase.storage.from("course-files").upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from("course-files").getPublicUrl(path);
+      setEditing((prev) => ({
+        ...prev,
+        url: data.publicUrl,
+        title: prev.title?.trim() ? prev.title : file.name,
+      }));
+      toast.success("Fichier téléversé");
+    } catch (err: any) {
+      toast.error(err.message ?? "Échec du téléversement");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const load = async () => {
     const [{ data: m }, { data: b }] = await Promise.all([
@@ -129,9 +155,42 @@ export default function AdminContents() {
                     <RichTextEditor value={editing.body ?? ""} onChange={(v) => setEditing({ ...editing, body: v })} />
                   </div>
                 ) : (
-                  <div>
+                  <div className="space-y-2">
                     <Label>URL</Label>
-                    <Input value={editing.url ?? ""} onChange={(e) => setEditing({ ...editing, url: e.target.value })} placeholder="https://…" />
+                    <div className="flex gap-2">
+                      <Input
+                        value={editing.url ?? ""}
+                        onChange={(e) => setEditing({ ...editing, url: e.target.value })}
+                        placeholder="https://…"
+                      />
+                      {editing.kind === "file" && (
+                        <>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={onFilePicked}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={uploading}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            {uploading ? (
+                              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Envoi…</>
+                            ) : (
+                              <><Upload className="h-4 w-4 mr-2" />Parcourir…</>
+                            )}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    {editing.kind === "file" && (
+                      <p className="text-xs text-muted-foreground">
+                        Choisissez un fichier sur votre ordinateur ou collez une URL existante.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
