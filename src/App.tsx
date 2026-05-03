@@ -26,6 +26,7 @@ import AdminContents from "./pages/AdminContents";
 import AdminEvaluations from "./pages/AdminEvaluations";
 import AdminQuestions from "./pages/AdminQuestions";
 import Echanges from "./pages/Echanges";
+import Personnel from "./pages/Personnel";
 
 const queryClient = new QueryClient();
 
