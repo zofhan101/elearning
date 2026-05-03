@@ -31,6 +31,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <NavItem to="/" icon={<LayoutDashboard className="h-4 w-4" />} label="Mon parcours" />
             <NavItem to="/explorer" icon={<Compass className="h-4 w-4" />} label="Explorer" />
             <NavItem to="/echanges" icon={<FolderKanban className="h-4 w-4" />} label="Échanges" />
+            <NavItem to="/personnel" icon={<IdCard className="h-4 w-4" />} label="Mon dossier" />
             {isStaff && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
