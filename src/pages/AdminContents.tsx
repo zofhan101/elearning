@@ -155,9 +155,42 @@ export default function AdminContents() {
                     <RichTextEditor value={editing.body ?? ""} onChange={(v) => setEditing({ ...editing, body: v })} />
                   </div>
                 ) : (
-                  <div>
+                  <div className="space-y-2">
                     <Label>URL</Label>
-                    <Input value={editing.url ?? ""} onChange={(e) => setEditing({ ...editing, url: e.target.value })} placeholder="https://…" />
+                    <div className="flex gap-2">
+                      <Input
+                        value={editing.url ?? ""}
+                        onChange={(e) => setEditing({ ...editing, url: e.target.value })}
+                        placeholder="https://…"
+                      />
+                      {editing.kind === "file" && (
+                        <>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={onFilePicked}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={uploading}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            {uploading ? (
+                              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Envoi…</>
+                            ) : (
+                              <><Upload className="h-4 w-4 mr-2" />Parcourir…</>
+                            )}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    {editing.kind === "file" && (
+                      <p className="text-xs text-muted-foreground">
+                        Choisissez un fichier sur votre ordinateur ou collez une URL existante.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
