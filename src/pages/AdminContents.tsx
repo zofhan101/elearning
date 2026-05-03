@@ -32,6 +32,32 @@ export default function AdminContents() {
   const [moduleTitle, setModuleTitle] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Block>>({ title: "", kind: "text", body: "" });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    try {
+      const safe = file.name.replace(/[^\w.\-]+/g, "_");
+      const path = `${moduleId}/${Date.now()}_${safe}`;
+      const { error } = await supabase.storage.from("course-files").upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from("course-files").getPublicUrl(path);
+      setEditing((prev) => ({
+        ...prev,
+        url: data.publicUrl,
+        title: prev.title?.trim() ? prev.title : file.name,
+      }));
+      toast.success("Fichier téléversé");
+    } catch (err: any) {
+      toast.error(err.message ?? "Échec du téléversement");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const load = async () => {
     const [{ data: m }, { data: b }] = await Promise.all([
