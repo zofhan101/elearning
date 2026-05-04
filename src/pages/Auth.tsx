@@ -162,7 +162,7 @@ export default function AuthPage() {
                         id="fullName"
                         value={request.fullName}
                         onChange={(e) => setRequest({ ...request, fullName: e.target.value })}
-                        placeholder="Lova Narindra Randriamanantsoa"
+                        placeholder="Votre nom complet"
                         required
                       />
                     </div>
