@@ -72,8 +72,37 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Se déconnecter">
               <LogOut className="h-4 w-4" />
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label="Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
         </div>
+
+        {mobileOpen && (
+          <nav className="md:hidden border-t border-border bg-card">
+            <div className="container py-2 flex flex-col">
+              <MobileItem onClick={() => go("/")} icon={<LayoutDashboard className="h-4 w-4" />} label="Mon parcours" />
+              <MobileItem onClick={() => go("/explorer")} icon={<Compass className="h-4 w-4" />} label="Explorer" />
+              <MobileItem onClick={() => go("/echanges")} icon={<FolderKanban className="h-4 w-4" />} label="Échanges" />
+              <MobileItem onClick={() => go("/personnel")} icon={<IdCard className="h-4 w-4" />} label="Mon dossier" />
+              {isStaff && (
+                <>
+                  <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Administration</div>
+                  <MobileItem onClick={() => go("/admin/cours")} icon={<Settings className="h-4 w-4" />} label="Cours & contenus" />
+                  {isAdmin && (
+                    <MobileItem onClick={() => go("/admin/inscriptions")} icon={<ShieldCheck className="h-4 w-4" />} label="Demandes d'inscription" />
+                  )}
+                </>
+              )}
+            </div>
+          </nav>
+        )}
       </header>
 
       <main className="flex-1">{children}</main>
