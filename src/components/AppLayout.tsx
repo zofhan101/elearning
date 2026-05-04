@@ -1,6 +1,6 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, FolderKanban, Settings, ChevronDown, IdCard } from "lucide-react";
+import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, FolderKanban, Settings, ChevronDown, IdCard, Menu } from "lucide-react";
 import logoFmm from "@/assets/logo-fmm.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
