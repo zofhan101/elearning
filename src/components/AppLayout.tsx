@@ -139,3 +139,15 @@ function NavItem({ to, icon, label }: { to: string; icon: ReactNode; label: stri
     </NavLink>
   );
 }
+
+function MobileItem({ onClick, icon, label }: { onClick: () => void; icon: ReactNode; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-foreground hover:bg-muted transition-colors text-left"
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
