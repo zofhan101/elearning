@@ -9,10 +9,16 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, signOut, isStaff, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
     navigate("/auth");
+  };
+
+  const go = (path: string) => {
+    setMobileOpen(false);
+    navigate(path);
   };
 
   return (
