@@ -20,6 +20,7 @@ interface Eval {
   single_attempt: boolean;
   mode: "individual" | "group";
   scheduled_at: string | null;
+  max_attempts: number;
 }
 
 export default function AdminEvaluations() {
@@ -28,7 +29,8 @@ export default function AdminEvaluations() {
   const [evals, setEvals] = useState<Eval[]>([]);
   const [course, setCourse] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<Eval>>({ title: "", description: "", duration_minutes: 30, single_attempt: true, mode: "individual" });
+  const defaults: Partial<Eval> = { title: "", description: "", duration_minutes: 30, single_attempt: true, mode: "individual", max_attempts: 1 };
+  const [editing, setEditing] = useState<Partial<Eval>>(defaults);
 
   const load = async () => {
     const [{ data: c }, { data: e }] = await Promise.all([
@@ -48,6 +50,7 @@ export default function AdminEvaluations() {
       duration_minutes: editing.duration_minutes ?? 30,
       single_attempt: !!editing.single_attempt,
       mode: editing.mode ?? "individual",
+      max_attempts: Math.max(1, editing.max_attempts ?? 1),
     };
     if (editing.id) {
       const { error } = await supabase.from("evaluations").update(payload).eq("id", editing.id);
