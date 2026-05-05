@@ -14,6 +14,7 @@ export default function EvaluationDetail() {
   const [ev, setEv] = useState<any>(null);
   const [questionsCount, setQ] = useState(0);
   const [previousAttempt, setPrev] = useState<any>(null);
+  const [attemptsCount, setAttemptsCount] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -27,13 +28,18 @@ export default function EvaluationDetail() {
         .select("*")
         .eq("evaluation_id", id)
         .eq("user_id", user!.id)
-        .order("started_at", { ascending: false })
-        .limit(1);
+        .order("started_at", { ascending: false });
       setPrev(a?.[0] ?? null);
+      setAttemptsCount((a ?? []).filter((x: any) => x.submitted_at).length);
     })();
   }, [id, user]);
 
   const start = async () => {
+    const max = ev.max_attempts ?? 1;
+    if (attemptsCount >= max) {
+      toast.error(`Nombre maximum de tentatives atteint (${max}).`);
+      return;
+    }
     const { data, error } = await supabase
       .from("attempts")
       .insert({ evaluation_id: id, user_id: user!.id, max_score: ev.total_points })
@@ -48,7 +54,8 @@ export default function EvaluationDetail() {
 
   if (!ev) return null;
   const submitted = previousAttempt?.submitted_at;
-  const blocked = submitted && ev.single_attempt;
+  const maxAttempts = ev.max_attempts ?? 1;
+  const blocked = (submitted && ev.single_attempt) || attemptsCount >= maxAttempts;
 
   return (
     <AppLayout>
@@ -90,6 +97,7 @@ export default function EvaluationDetail() {
           {ev.single_attempt && (
             <Row strong="Un seul essai" sub="Une fois ce questionnaire soumis, il ne sera plus possible d'y répondre à nouveau." />
           )}
+          <Row strong={`Tentatives autorisées : ${maxAttempts}`} sub={`Vous avez utilisé ${attemptsCount} tentative${attemptsCount > 1 ? "s" : ""}.`} />
           <Row strong="Information supplémentaire" sub="Aucun document autorisé." />
         </section>
 
