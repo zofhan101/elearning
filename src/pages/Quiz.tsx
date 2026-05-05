@@ -18,6 +18,7 @@ interface Q {
   choices: any[] | null;
   correct: any[] | null;
   position: number;
+  time_limit_seconds: number | null;
 }
 
 export default function Quiz() {
