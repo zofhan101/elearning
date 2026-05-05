@@ -31,6 +31,7 @@ export default function Quiz() {
   const [showTimer, setShowTimer] = useState(true);
   const [now, setNow] = useState(Date.now());
   const [submitting, setSubmitting] = useState(false);
+  const [questionDeadlines, setQuestionDeadlines] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!attemptId) return;
@@ -50,6 +51,14 @@ export default function Quiz() {
         .eq("evaluation_id", a.evaluation_id)
         .order("position");
       setQuestions((qs as any) ?? []);
+      const start = Date.now();
+      const dl: Record<string, number> = {};
+      (qs ?? []).forEach((q: any) => {
+        if (q.time_limit_seconds && q.time_limit_seconds > 0) {
+          dl[q.id] = start + q.time_limit_seconds * 1000;
+        }
+      });
+      setQuestionDeadlines(dl);
     })();
   }, [attemptId, navigate]);
 
@@ -140,23 +149,35 @@ export default function Quiz() {
       </header>
 
       <main className="container max-w-3xl py-8 space-y-5">
-        {questions.map((q, i) => (
-          <div key={q.id} className="surface-card p-6">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-bold text-primary tabular-nums">{i + 1}</span>
-                <p className="font-medium leading-relaxed">{q.prompt}</p>
+        {questions.map((q, i) => {
+          const dl = questionDeadlines[q.id];
+          const qRemaining = dl ? Math.max(0, Math.floor((dl - now) / 1000)) : null;
+          const locked = qRemaining !== null && qRemaining === 0;
+          return (
+            <div key={q.id} className="surface-card p-6">
+              <div className="flex items-start justify-between mb-3 gap-3">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-2xl font-bold text-primary tabular-nums">{i + 1}</span>
+                  <p className="font-medium leading-relaxed">{q.prompt}</p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  {qRemaining !== null && (
+                    <span className={`text-xs font-mono px-2 py-1 rounded ${locked ? "bg-destructive/10 text-destructive" : qRemaining < 10 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
+                      {locked ? "Temps écoulé" : `${qRemaining}s`}
+                    </span>
+                  )}
+                  <span className="text-xs font-medium px-2 py-1 rounded bg-muted text-muted-foreground">
+                    {q.points} pt{q.points > 1 ? "s" : ""}
+                  </span>
+                </div>
               </div>
-              <span className="shrink-0 ml-3 text-xs font-medium px-2 py-1 rounded bg-muted text-muted-foreground">
-                {q.points} pt{q.points > 1 ? "s" : ""}
-              </span>
-            </div>
 
-            <div className="ml-9 mt-4">
-              <QuestionInput q={q} value={responses[q.id]} onChange={(v) => setResponses({ ...responses, [q.id]: v })} />
+              <div className={`ml-9 mt-4 ${locked ? "opacity-50 pointer-events-none" : ""}`}>
+                <QuestionInput q={q} value={responses[q.id]} onChange={(v) => setResponses({ ...responses, [q.id]: v })} />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm">
           Soumettre le questionnaire vous permet de vérifier le mode de publication des résultats et de consulter le corrigé.
