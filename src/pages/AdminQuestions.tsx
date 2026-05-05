@@ -24,6 +24,7 @@ interface Question {
   correct: any;
   points: number;
   position: number;
+  time_limit_seconds: number | null;
 }
 
 export default function AdminQuestions() {
@@ -31,7 +32,8 @@ export default function AdminQuestions() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [evalTitle, setEvalTitle] = useState("");
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<Question>>({ prompt: "", kind: "single", choices: ["", ""], correct: [], points: 1 });
+  const defaults: Partial<Question> = { prompt: "", kind: "single", choices: ["", ""], correct: [], points: 1, time_limit_seconds: null };
+  const [editing, setEditing] = useState<Partial<Question>>(defaults);
 
   const load = async () => {
     const [{ data: e }, { data: q }] = await Promise.all([
@@ -51,6 +53,7 @@ export default function AdminQuestions() {
       choices: editing.kind === "short_text" ? null : editing.choices,
       correct: editing.correct,
       points: editing.points ?? 1,
+      time_limit_seconds: editing.time_limit_seconds && editing.time_limit_seconds > 0 ? editing.time_limit_seconds : null,
     };
     if (editing.id) {
       const { error } = await supabase.from("questions").update(payload).eq("id", editing.id);
@@ -63,7 +66,7 @@ export default function AdminQuestions() {
     }
     toast.success("Enregistré");
     setOpen(false);
-    setEditing({ prompt: "", kind: "single", choices: ["", ""], correct: [], points: 1 });
+    setEditing(defaults);
     load();
   };
 
@@ -110,7 +113,7 @@ export default function AdminQuestions() {
             <h1 className="text-2xl font-semibold">Questions</h1>
             <p className="text-muted-foreground text-sm">{evalTitle}</p>
           </div>
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing({ prompt: "", kind: "single", choices: ["", ""], correct: [], points: 1 }); }}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(defaults); }}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1" />Nouvelle question</Button>
             </DialogTrigger>
@@ -136,6 +139,17 @@ export default function AdminQuestions() {
                     <Label>Points</Label>
                     <Input type="number" value={editing.points ?? 1} onChange={(e) => setEditing({ ...editing, points: parseInt(e.target.value) })} />
                   </div>
+                </div>
+                <div>
+                  <Label>Chronomètre par question (secondes — optionnel)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="Aucune limite"
+                    value={editing.time_limit_seconds ?? ""}
+                    onChange={(e) => setEditing({ ...editing, time_limit_seconds: e.target.value ? parseInt(e.target.value) : null })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Si défini, la question passe automatiquement à la suivante après ce délai.</p>
                 </div>
                 <div>
                   <Label>Énoncé *</Label>
