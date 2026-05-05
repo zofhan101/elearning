@@ -582,7 +582,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "instructor" | "student" | "staff_admin"
-      content_kind: "presentation" | "reading" | "link" | "text" | "video"
+      content_kind:
+        | "presentation"
+        | "reading"
+        | "link"
+        | "text"
+        | "video"
+        | "file"
       eval_mode: "individual" | "group"
       mention_type:
         | "medecine_humaine"
@@ -735,7 +741,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "instructor", "student", "staff_admin"],
-      content_kind: ["presentation", "reading", "link", "text", "video"],
+      content_kind: [
+        "presentation",
+        "reading",
+        "link",
+        "text",
+        "video",
+        "file",
+      ],
       eval_mode: ["individual", "group"],
       mention_type: [
         "medecine_humaine",
