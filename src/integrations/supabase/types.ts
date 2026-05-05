@@ -219,6 +219,7 @@ export type Database = {
           description: string | null
           duration_minutes: number
           id: string
+          max_attempts: number
           mode: Database["public"]["Enums"]["eval_mode"]
           scheduled_at: string | null
           single_attempt: boolean
@@ -231,6 +232,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          max_attempts?: number
           mode?: Database["public"]["Enums"]["eval_mode"]
           scheduled_at?: string | null
           single_attempt?: boolean
@@ -243,6 +245,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          max_attempts?: number
           mode?: Database["public"]["Enums"]["eval_mode"]
           scheduled_at?: string | null
           single_attempt?: boolean
@@ -388,6 +391,7 @@ export type Database = {
           points: number
           position: number
           prompt: string
+          time_limit_seconds: number | null
         }
         Insert: {
           choices?: Json | null
@@ -398,6 +402,7 @@ export type Database = {
           points?: number
           position?: number
           prompt: string
+          time_limit_seconds?: number | null
         }
         Update: {
           choices?: Json | null
@@ -408,6 +413,7 @@ export type Database = {
           points?: number
           position?: number
           prompt?: string
+          time_limit_seconds?: number | null
         }
         Relationships: [
           {
