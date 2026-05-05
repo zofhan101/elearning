@@ -62,7 +62,7 @@ export default function AdminEvaluations() {
     }
     toast.success("Enregistré");
     setOpen(false);
-    setEditing({ title: "", description: "", duration_minutes: 30, single_attempt: true, mode: "individual" });
+    setEditing(defaults);
     load();
   };
 
@@ -84,7 +84,7 @@ export default function AdminEvaluations() {
             <h1 className="text-2xl font-semibold">Évaluations</h1>
             <p className="text-muted-foreground text-sm">{course?.title}</p>
           </div>
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing({ title: "", description: "", duration_minutes: 30, single_attempt: true, mode: "individual" }); }}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(defaults); }}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1" />Nouvelle évaluation</Button>
             </DialogTrigger>
@@ -126,6 +126,16 @@ export default function AdminEvaluations() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+                <div>
+                  <Label>Nombre maximum de tentatives</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={editing.max_attempts ?? 1}
+                    onChange={(e) => setEditing({ ...editing, max_attempts: Math.max(1, parseInt(e.target.value) || 1) })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Limite stricte appliquée côté serveur — l'étudiant ne peut pas la modifier.</p>
                 </div>
               </div>
               <DialogFooter>
