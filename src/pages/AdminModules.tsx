@@ -19,6 +19,7 @@ interface Module {
   position: number;
   start_date: string | null;
   end_date: string | null;
+  cohort_id: string | null;
 }
 
 export default function AdminModules() {
