@@ -23,6 +23,7 @@ interface Course {
   end_date: string | null;
   is_open: boolean;
   cover_color: string | null;
+  cohort_id: string | null;
 }
 
 const empty: Partial<Course> = {
