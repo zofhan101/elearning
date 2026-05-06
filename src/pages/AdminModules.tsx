@@ -116,6 +116,10 @@ export default function AdminModules() {
                     <Input type="date" value={editing.end_date ?? ""} onChange={(e) => setEditing({ ...editing, end_date: e.target.value })} />
                   </div>
                 </div>
+                <div>
+                  <Label>Cohorte cible (optionnel)</Label>
+                  <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Hérite du cours —" />
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
