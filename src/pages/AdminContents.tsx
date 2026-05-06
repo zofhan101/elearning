@@ -79,6 +79,7 @@ export default function AdminContents() {
       body: editing.body || null,
       url: editing.url || null,
       section: editing.section || null,
+      cohort_id: editing.cohort_id ?? null,
     };
     if (editing.id) {
       const { error } = await supabase.from("content_blocks").update(payload).eq("id", editing.id);
