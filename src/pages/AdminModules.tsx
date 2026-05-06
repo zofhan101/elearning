@@ -47,6 +47,7 @@ export default function AdminModules() {
       description: editing.description || null,
       start_date: editing.start_date || null,
       end_date: editing.end_date || null,
+      cohort_id: editing.cohort_id ?? null,
     };
     if (editing.id) {
       const { error } = await supabase.from("modules").update(payload).eq("id", editing.id);
