@@ -148,9 +148,15 @@ export default function AdminContents() {
                     </Select>
                   </div>
                 </div>
-                <div>
-                  <Label>Section (optionnel)</Label>
-                  <Input value={editing.section ?? ""} onChange={(e) => setEditing({ ...editing, section: e.target.value })} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Section (optionnel)</Label>
+                    <Input value={editing.section ?? ""} onChange={(e) => setEditing({ ...editing, section: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Cohorte cible (optionnel)</Label>
+                    <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Hérite du module —" />
+                  </div>
                 </div>
                 {editing.kind === "text" ? (
                   <div>
