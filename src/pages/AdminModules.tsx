@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { SortableList } from "@/components/SortableList";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { CohortSelect } from "@/components/CohortSelect";
 import { toast } from "sonner";
 
 interface Module {
