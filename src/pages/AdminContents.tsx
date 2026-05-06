@@ -25,6 +25,7 @@ interface Block {
   url: string | null;
   section: string | null;
   position: number;
+  cohort_id: string | null;
 }
 
 export default function AdminContents() {
