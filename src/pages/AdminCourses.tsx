@@ -35,6 +35,7 @@ const empty: Partial<Course> = {
   end_date: "",
   is_open: false,
   cover_color: "blue",
+  cohort_id: null,
 };
 
 export default function AdminCourses() {
