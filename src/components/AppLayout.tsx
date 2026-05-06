@@ -49,6 +49,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => navigate("/admin/cours")}>Cours & contenus</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/admin/cohortes")}>Cohortes</DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem onClick={() => navigate("/admin/inscriptions")}>
                       <ShieldCheck className="h-4 w-4 mr-2" />Demandes d'inscription
