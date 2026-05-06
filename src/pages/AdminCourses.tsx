@@ -62,6 +62,7 @@ export default function AdminCourses() {
       end_date: editing.end_date || null,
       is_open: !!editing.is_open,
       cover_color: editing.cover_color || "blue",
+      cohort_id: editing.cohort_id ?? null,
     };
     if (editing.id) {
       const { error } = await supabase.from("courses").update(payload).eq("id", editing.id);
