@@ -136,6 +136,10 @@ export default function AdminCourses() {
                   <Switch checked={!!editing.is_open} onCheckedChange={(v) => setEditing({ ...editing, is_open: v })} />
                   <Label>Cours ouvert aux étudiants</Label>
                 </div>
+                <div className="col-span-2">
+                  <Label>Cohorte cible</Label>
+                  <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} />
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
