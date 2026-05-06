@@ -91,9 +91,72 @@ export type Database = {
           },
         ]
       }
+      cohort_members: {
+        Row: {
+          cohort_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          cohort_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          cohort_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_members_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohorts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          mention: Database["public"]["Enums"]["mention_type"] | null
+          name: string
+          niveau: Database["public"]["Enums"]["niveau_etude"] | null
+          parcours: Database["public"]["Enums"]["parcours_type"] | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          mention?: Database["public"]["Enums"]["mention_type"] | null
+          name: string
+          niveau?: Database["public"]["Enums"]["niveau_etude"] | null
+          parcours?: Database["public"]["Enums"]["parcours_type"] | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          mention?: Database["public"]["Enums"]["mention_type"] | null
+          name?: string
+          niveau?: Database["public"]["Enums"]["niveau_etude"] | null
+          parcours?: Database["public"]["Enums"]["parcours_type"] | null
+        }
+        Relationships: []
+      }
       content_blocks: {
         Row: {
           body: string | null
+          cohort_id: string | null
           created_at: string
           id: string
           kind: Database["public"]["Enums"]["content_kind"]
@@ -106,6 +169,7 @@ export type Database = {
         }
         Insert: {
           body?: string | null
+          cohort_id?: string | null
           created_at?: string
           id?: string
           kind?: Database["public"]["Enums"]["content_kind"]
@@ -118,6 +182,7 @@ export type Database = {
         }
         Update: {
           body?: string | null
+          cohort_id?: string | null
           created_at?: string
           id?: string
           kind?: Database["public"]["Enums"]["content_kind"]
@@ -130,6 +195,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "content_blocks_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "content_blocks_module_id_fkey"
             columns: ["module_id"]
             isOneToOne: false
@@ -140,6 +212,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          cohort_id: string | null
           cover_color: string | null
           created_at: string
           created_by: string | null
@@ -154,6 +227,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          cohort_id?: string | null
           cover_color?: string | null
           created_at?: string
           created_by?: string | null
@@ -168,6 +242,7 @@ export type Database = {
           title: string
         }
         Update: {
+          cohort_id?: string | null
           cover_color?: string | null
           created_at?: string
           created_by?: string | null
@@ -181,7 +256,15 @@ export type Database = {
           subtitle?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "courses_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       enrollments: {
         Row: {
@@ -264,6 +347,7 @@ export type Database = {
       }
       modules: {
         Row: {
+          cohort_id: string | null
           course_id: string
           created_at: string
           description: string | null
@@ -274,6 +358,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          cohort_id?: string | null
           course_id: string
           created_at?: string
           description?: string | null
@@ -284,6 +369,7 @@ export type Database = {
           title: string
         }
         Update: {
+          cohort_id?: string | null
           course_id?: string
           created_at?: string
           description?: string | null
@@ -294,6 +380,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "modules_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "modules_course_id_fkey"
             columns: ["course_id"]
@@ -563,6 +656,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_course: {
+        Args: { _course_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_write_audience: {
         Args: {
           _audience: Database["public"]["Enums"]["share_audience"]
@@ -582,6 +679,10 @@ export type Database = {
           _audience: Database["public"]["Enums"]["share_audience"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_in_cohort: {
+        Args: { _cohort_id: string; _user_id: string }
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }

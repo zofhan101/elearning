@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { CohortSelect } from "@/components/CohortSelect";
 
 interface Course {
   id: string;
@@ -22,6 +23,7 @@ interface Course {
   end_date: string | null;
   is_open: boolean;
   cover_color: string | null;
+  cohort_id: string | null;
 }
 
 const empty: Partial<Course> = {
@@ -33,6 +35,7 @@ const empty: Partial<Course> = {
   end_date: "",
   is_open: false,
   cover_color: "blue",
+  cohort_id: null,
 };
 
 export default function AdminCourses() {
@@ -59,6 +62,7 @@ export default function AdminCourses() {
       end_date: editing.end_date || null,
       is_open: !!editing.is_open,
       cover_color: editing.cover_color || "blue",
+      cohort_id: editing.cohort_id ?? null,
     };
     if (editing.id) {
       const { error } = await supabase.from("courses").update(payload).eq("id", editing.id);
@@ -131,6 +135,10 @@ export default function AdminCourses() {
                 <div className="flex items-end gap-3">
                   <Switch checked={!!editing.is_open} onCheckedChange={(v) => setEditing({ ...editing, is_open: v })} />
                   <Label>Cours ouvert aux étudiants</Label>
+                </div>
+                <div className="col-span-2">
+                  <Label>Cohorte cible</Label>
+                  <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} />
                 </div>
               </div>
               <DialogFooter>

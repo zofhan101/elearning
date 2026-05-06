@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { SortableList } from "@/components/SortableList";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { SafeHtml } from "@/components/SafeHtml";
+import { CohortSelect } from "@/components/CohortSelect";
 import { toast } from "sonner";
 
 type Kind = "text" | "video" | "link" | "file";
@@ -24,6 +25,7 @@ interface Block {
   url: string | null;
   section: string | null;
   position: number;
+  cohort_id: string | null;
 }
 
 export default function AdminContents() {
@@ -77,6 +79,7 @@ export default function AdminContents() {
       body: editing.body || null,
       url: editing.url || null,
       section: editing.section || null,
+      cohort_id: editing.cohort_id ?? null,
     };
     if (editing.id) {
       const { error } = await supabase.from("content_blocks").update(payload).eq("id", editing.id);
@@ -145,9 +148,15 @@ export default function AdminContents() {
                     </Select>
                   </div>
                 </div>
-                <div>
-                  <Label>Section (optionnel)</Label>
-                  <Input value={editing.section ?? ""} onChange={(e) => setEditing({ ...editing, section: e.target.value })} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Section (optionnel)</Label>
+                    <Input value={editing.section ?? ""} onChange={(e) => setEditing({ ...editing, section: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Cohorte cible (optionnel)</Label>
+                    <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Hérite du module —" />
+                  </div>
                 </div>
                 {editing.kind === "text" ? (
                   <div>
