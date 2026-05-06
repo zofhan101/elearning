@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { SortableList } from "@/components/SortableList";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { SafeHtml } from "@/components/SafeHtml";
+import { CohortSelect } from "@/components/CohortSelect";
 import { toast } from "sonner";
 
 type Kind = "text" | "video" | "link" | "file";
