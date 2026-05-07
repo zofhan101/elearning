@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 
 const MENTIONS = ["medecine_humaine", "pharmacie", "medecine_veterinaire", "sciences_paramedicales"];
-const PARCOURS = ["anesthesie", "maieutique", "infirmier_generaliste", "massokinesitherapie", "ergotherapie", "technique_appareillage", "technique_laboratoire", "electroradiologie"];
+const PARCOURS = ["tronc_commun", "medecine_humaine", "medecine_veterinaire", "pharmacie", "anesthesie", "maieutique", "infirmier_generaliste", "massokinesitherapie", "ergotherapie", "technique_appareillage", "technique_laboratoire", "electroradiologie"];
 const NIVEAUX = ["L1", "L2", "L3", "A4", "A5", "A6", "A7", "A8"];
 
 const ANY = "__any__";

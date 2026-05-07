@@ -712,6 +712,10 @@ export type Database = {
         | "technique_appareillage"
         | "technique_laboratoire"
         | "electroradiologie"
+        | "tronc_commun"
+        | "medecine_humaine"
+        | "medecine_veterinaire"
+        | "pharmacie"
       question_kind:
         | "mcq_single"
         | "mcq_multi"
@@ -873,6 +877,10 @@ export const Constants = {
         "technique_appareillage",
         "technique_laboratoire",
         "electroradiologie",
+        "tronc_commun",
+        "medecine_humaine",
+        "medecine_veterinaire",
+        "pharmacie",
       ],
       question_kind: ["mcq_single", "mcq_multi", "true_false", "short", "long"],
       share_audience: ["teachers", "students", "staff_admin", "all"],
