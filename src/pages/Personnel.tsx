@@ -14,7 +14,8 @@ import { Upload, Search, Save } from "lucide-react";
 type Mention = "medecine_humaine" | "pharmacie" | "medecine_veterinaire" | "sciences_paramedicales";
 type Parcours =
   | "anesthesie" | "maieutique" | "infirmier_generaliste" | "massokinesitherapie"
-  | "ergotherapie" | "technique_appareillage" | "technique_laboratoire" | "electroradiologie";
+  | "ergotherapie" | "technique_appareillage" | "technique_laboratoire" | "electroradiologie"
+  | "tronc_commun" | "medecine_humaine" | "medecine_veterinaire" | "pharmacie";
 type Niveau = "L1" | "L2" | "L3" | "A4" | "A5" | "A6" | "A7" | "A8";
 
 interface Personnel {
@@ -41,6 +42,10 @@ const MENTIONS: { value: Mention; label: string }[] = [
 ];
 
 const PARCOURS: { value: Parcours; label: string }[] = [
+  { value: "tronc_commun", label: "Tronc Commun" },
+  { value: "medecine_humaine", label: "Médecine Humaine" },
+  { value: "medecine_veterinaire", label: "Médecine Vétérinaire" },
+  { value: "pharmacie", label: "Pharmacie" },
   { value: "anesthesie", label: "Anesthésie" },
   { value: "maieutique", label: "Maïeutique" },
   { value: "infirmier_generaliste", label: "Infirmier Généraliste" },
