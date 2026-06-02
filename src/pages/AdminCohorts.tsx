@@ -114,6 +114,41 @@ export default function AdminCohorts() {
     if (membersFor) loadMembers(membersFor);
   };
 
+  const importCsv = async (file: File) => {
+    if (!membersFor) return;
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) return toast.error("Fichier vide");
+    // Detect header
+    const header = lines[0].toLowerCase();
+    const hasHeader = /email|matricule/.test(header);
+    const rows = (hasHeader ? lines.slice(1) : lines).map((l) => l.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "")));
+    const cols = hasHeader ? header.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "")) : ["email"];
+    const emailIdx = cols.indexOf("email");
+    const matIdx = cols.indexOf("matricule");
+    const emails = rows.map((r) => (emailIdx >= 0 ? r[emailIdx] : r[0])).filter(Boolean).map((e) => e.toLowerCase());
+    const matricules = matIdx >= 0 ? rows.map((r) => r[matIdx]).filter(Boolean) : [];
+
+    const userIds = new Set<string>();
+    if (emails.length) {
+      const { data } = await supabase.from("profiles").select("id, email").in("email", emails);
+      (data ?? []).forEach((p: any) => userIds.add(p.id));
+    }
+    if (matricules.length) {
+      const { data } = await supabase.from("personnel").select("id, matricule").in("matricule", matricules);
+      (data ?? []).forEach((p: any) => userIds.add(p.id));
+    }
+    if (userIds.size === 0) return toast.error("Aucun étudiant correspondant trouvé");
+
+    const payload = Array.from(userIds).map((user_id) => ({ cohort_id: membersFor.id, user_id }));
+    const { error, count } = await supabase
+      .from("cohort_members")
+      .upsert(payload, { onConflict: "cohort_id,user_id", ignoreDuplicates: true, count: "exact" });
+    if (error) return toast.error(error.message);
+    toast.success(`${count ?? payload.length} membre(s) importé(s) sur ${rows.length} ligne(s)`);
+    loadMembers(membersFor);
+  };
+
   return (
     <AppLayout>
       <div className="container py-8 max-w-4xl">
