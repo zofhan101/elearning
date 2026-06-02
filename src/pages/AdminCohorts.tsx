@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Users, X, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, X, Upload, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,9 @@ export default function AdminCohorts() {
   const [members, setMembers] = useState<Member[]>([]);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Member[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [personnelList, setPersonnelList] = useState<any[]>([]);
+  const [personnelSearch, setPersonnelSearch] = useState("");
 
   const load = async () => {
     const { data } = await supabase.from("cohorts").select("*").order("name");
@@ -106,6 +109,12 @@ export default function AdminCohorts() {
     const { error } = await supabase.from("cohort_members").insert({ cohort_id: membersFor.id, user_id: userId });
     if (error) return toast.error(error.message);
     loadMembers(membersFor);
+  };
+
+  const openPicker = async () => {
+    setPickerOpen(true);
+    const { data } = await supabase.from("personnel").select("id, nom, prenom, mention, parcours, niveau").order("nom").limit(500);
+    setPersonnelList((data as any) ?? []);
   };
 
   const removeMember = async (id: string) => {
@@ -264,6 +273,9 @@ export default function AdminCohorts() {
                     <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.target.value = ""; }} />
                   </label>
                 </Button>
+                <Button variant="outline" onClick={openPicker}>
+                  <UserPlus className="h-4 w-4 mr-1" />Ajouter manuellement
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">
                 Format CSV attendu : une colonne <code>email</code> (recommandé) et/ou <code>matricule</code>, séparées par <code>,</code> <code>;</code> ou tabulation. Exemple : <code>email,matricule</code> puis <code>jean.dupont@univ.mg,MAT001</code>. Sans en-tête, la première colonne est traitée comme email.
@@ -296,6 +308,44 @@ export default function AdminCohorts() {
                   ))}
                   {members.length === 0 && <div className="text-sm text-muted-foreground">Aucun membre manuel.</div>}
                 </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) setPersonnelSearch(""); }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Ajouter un membre — {membersFor?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input placeholder="Filtrer par nom, prénom, mention…" value={personnelSearch} onChange={(e) => setPersonnelSearch(e.target.value)} />
+              <div className="max-h-[420px] overflow-y-auto space-y-1">
+                {personnelList
+                  .filter((p) => {
+                    if (!personnelSearch.trim()) return true;
+                    const q = personnelSearch.toLowerCase();
+                    return [p.nom, p.prenom, p.mention, p.parcours, p.niveau].some((v: any) => v?.toLowerCase().includes(q));
+                  })
+                  .map((p) => {
+                    const already = members.some((m) => m.user_id === p.id);
+                    return (
+                      <div key={p.id} className="flex items-center justify-between px-3 py-2 surface-card">
+                        <div className="text-sm">
+                          <div className="font-medium">{[p.nom, p.prenom].filter(Boolean).join(" ") || "—"}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {[p.mention, p.parcours, p.niveau].filter(Boolean).join(" · ")}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" disabled={already} onClick={async () => { await addMember(p.id); }}>
+                          {already ? "Déjà membre" : "Ajouter"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                {personnelList.length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center py-6">Aucun membre disponible. Créez-en depuis Administration → Membres.</div>
+                )}
               </div>
             </div>
           </DialogContent>

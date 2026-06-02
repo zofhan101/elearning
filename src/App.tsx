@@ -28,6 +28,7 @@ import AdminQuestions from "./pages/AdminQuestions";
 import Echanges from "./pages/Echanges";
 import Personnel from "./pages/Personnel";
 import AdminCohorts from "./pages/AdminCohorts";
+import AdminMembers from "./pages/AdminMembers";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/admin/inscriptions" element={<RequireRole allow="admin"><AdminSignupRequests /></RequireRole>} />
             <Route path="/admin/cours" element={<RequireRole allow="staff"><AdminCourses /></RequireRole>} />
             <Route path="/admin/cohortes" element={<RequireRole allow="staff"><AdminCohorts /></RequireRole>} />
+            <Route path="/admin/membres" element={<RequireRole allow="admin"><AdminMembers /></RequireRole>} />
             <Route path="/admin/cours/:courseId/modules" element={<RequireRole allow="staff"><AdminModules /></RequireRole>} />
             <Route path="/admin/cours/:courseId/modules/:moduleId/contenus" element={<RequireRole allow="staff"><AdminContents /></RequireRole>} />
             <Route path="/admin/cours/:courseId/evaluations" element={<RequireRole allow="staff"><AdminEvaluations /></RequireRole>} />
