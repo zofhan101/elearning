@@ -51,6 +51,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <DropdownMenuItem onClick={() => navigate("/admin/cours")}>Cours & contenus</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/admin/cohortes")}>Cohortes</DropdownMenuItem>
                   {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate("/admin/membres")}>Membres</DropdownMenuItem>
+                  )}
+                  {isAdmin && (
                     <DropdownMenuItem onClick={() => navigate("/admin/inscriptions")}>
                       <ShieldCheck className="h-4 w-4 mr-2" />Demandes d'inscription
                     </DropdownMenuItem>
@@ -97,6 +100,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Administration</div>
                   <MobileItem onClick={() => go("/admin/cours")} icon={<Settings className="h-4 w-4" />} label="Cours & contenus" />
                   <MobileItem onClick={() => go("/admin/cohortes")} icon={<Settings className="h-4 w-4" />} label="Cohortes" />
+                  {isAdmin && (
+                    <MobileItem onClick={() => go("/admin/membres")} icon={<IdCard className="h-4 w-4" />} label="Membres" />
+                  )}
                   {isAdmin && (
                     <MobileItem onClick={() => go("/admin/inscriptions")} icon={<ShieldCheck className="h-4 w-4" />} label="Demandes d'inscription" />
                   )}
