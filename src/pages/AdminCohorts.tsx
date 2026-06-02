@@ -273,6 +273,9 @@ export default function AdminCohorts() {
                     <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.target.value = ""; }} />
                   </label>
                 </Button>
+                <Button variant="outline" onClick={openPicker}>
+                  <UserPlus className="h-4 w-4 mr-1" />Ajouter manuellement
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">
                 Format CSV attendu : une colonne <code>email</code> (recommandé) et/ou <code>matricule</code>, séparées par <code>,</code> <code>;</code> ou tabulation. Exemple : <code>email,matricule</code> puis <code>jean.dupont@univ.mg,MAT001</code>. Sans en-tête, la première colonne est traitée comme email.
