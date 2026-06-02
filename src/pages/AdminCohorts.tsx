@@ -312,6 +312,44 @@ export default function AdminCohorts() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) setPersonnelSearch(""); }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Ajouter un membre — {membersFor?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input placeholder="Filtrer par nom, prénom, mention…" value={personnelSearch} onChange={(e) => setPersonnelSearch(e.target.value)} />
+              <div className="max-h-[420px] overflow-y-auto space-y-1">
+                {personnelList
+                  .filter((p) => {
+                    if (!personnelSearch.trim()) return true;
+                    const q = personnelSearch.toLowerCase();
+                    return [p.nom, p.prenom, p.mention, p.parcours, p.niveau].some((v: any) => v?.toLowerCase().includes(q));
+                  })
+                  .map((p) => {
+                    const already = members.some((m) => m.user_id === p.id);
+                    return (
+                      <div key={p.id} className="flex items-center justify-between px-3 py-2 surface-card">
+                        <div className="text-sm">
+                          <div className="font-medium">{[p.nom, p.prenom].filter(Boolean).join(" ") || "—"}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {[p.mention, p.parcours, p.niveau].filter(Boolean).join(" · ")}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" disabled={already} onClick={async () => { await addMember(p.id); }}>
+                          {already ? "Déjà membre" : "Ajouter"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                {personnelList.length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center py-6">Aucun membre disponible. Créez-en depuis Administration → Membres.</div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
