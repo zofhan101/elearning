@@ -111,6 +111,12 @@ export default function AdminCohorts() {
     loadMembers(membersFor);
   };
 
+  const openPicker = async () => {
+    setPickerOpen(true);
+    const { data } = await supabase.from("personnel").select("id, nom, prenom, mention, parcours, niveau").order("nom").limit(500);
+    setPersonnelList((data as any) ?? []);
+  };
+
   const removeMember = async (id: string) => {
     const { error } = await supabase.from("cohort_members").delete().eq("id", id);
     if (error) return toast.error(error.message);
