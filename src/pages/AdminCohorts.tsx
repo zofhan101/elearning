@@ -140,12 +140,15 @@ export default function AdminCohorts() {
     }
     if (userIds.size === 0) return toast.error("Aucun étudiant correspondant trouvé");
 
-    const payload = Array.from(userIds).map((user_id) => ({ cohort_id: membersFor.id, user_id }));
-    const { error, count } = await supabase
-      .from("cohort_members")
-      .upsert(payload, { onConflict: "cohort_id,user_id", ignoreDuplicates: true, count: "exact" });
+    const ids = Array.from(userIds);
+    const { data: existing } = await supabase
+      .from("cohort_members").select("user_id").eq("cohort_id", membersFor.id).in("user_id", ids);
+    const existingSet = new Set((existing ?? []).map((m: any) => m.user_id));
+    const toInsert = ids.filter((id) => !existingSet.has(id)).map((user_id) => ({ cohort_id: membersFor.id, user_id }));
+    if (toInsert.length === 0) { toast.info("Tous les membres trouvés sont déjà présents"); return; }
+    const { error } = await supabase.from("cohort_members").insert(toInsert);
     if (error) return toast.error(error.message);
-    toast.success(`${count ?? payload.length} membre(s) importé(s) sur ${rows.length} ligne(s)`);
+    toast.success(`${toInsert.length} membre(s) ajouté(s) sur ${rows.length} ligne(s) (${ids.length} trouvés)`);
     loadMembers(membersFor);
   };
 
