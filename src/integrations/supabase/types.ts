@@ -412,6 +412,7 @@ export type Database = {
           parcours: Database["public"]["Enums"]["parcours_type"] | null
           pere: string | null
           prenom: string | null
+          sexe: Database["public"]["Enums"]["sexe_type"] | null
           updated_at: string
         }
         Insert: {
@@ -420,7 +421,7 @@ export type Database = {
           date_naissance?: string | null
           email_institutionnel?: string | null
           email_personnel?: string | null
-          id: string
+          id?: string
           matricule?: string | null
           mention?: Database["public"]["Enums"]["mention_type"] | null
           mere?: string | null
@@ -429,6 +430,7 @@ export type Database = {
           parcours?: Database["public"]["Enums"]["parcours_type"] | null
           pere?: string | null
           prenom?: string | null
+          sexe?: Database["public"]["Enums"]["sexe_type"] | null
           updated_at?: string
         }
         Update: {
@@ -446,6 +448,7 @@ export type Database = {
           parcours?: Database["public"]["Enums"]["parcours_type"] | null
           pere?: string | null
           prenom?: string | null
+          sexe?: Database["public"]["Enums"]["sexe_type"] | null
           updated_at?: string
         }
         Relationships: []
@@ -722,6 +725,7 @@ export type Database = {
         | "true_false"
         | "short"
         | "long"
+      sexe_type: "M" | "F"
       share_audience: "teachers" | "students" | "staff_admin" | "all"
       signup_status: "pending" | "approved" | "rejected"
     }
@@ -883,6 +887,7 @@ export const Constants = {
         "pharmacie",
       ],
       question_kind: ["mcq_single", "mcq_multi", "true_false", "short", "long"],
+      sexe_type: ["M", "F"],
       share_audience: ["teachers", "students", "staff_admin", "all"],
       signup_status: ["pending", "approved", "rejected"],
     },
