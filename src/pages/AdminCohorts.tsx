@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Users, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, X, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -114,6 +114,44 @@ export default function AdminCohorts() {
     if (membersFor) loadMembers(membersFor);
   };
 
+  const importCsv = async (file: File) => {
+    if (!membersFor) return;
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) return toast.error("Fichier vide");
+    // Detect header
+    const header = lines[0].toLowerCase();
+    const hasHeader = /email|matricule/.test(header);
+    const rows = (hasHeader ? lines.slice(1) : lines).map((l) => l.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "")));
+    const cols = hasHeader ? header.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "")) : ["email"];
+    const emailIdx = cols.indexOf("email");
+    const matIdx = cols.indexOf("matricule");
+    const emails = rows.map((r) => (emailIdx >= 0 ? r[emailIdx] : r[0])).filter(Boolean).map((e) => e.toLowerCase());
+    const matricules = matIdx >= 0 ? rows.map((r) => r[matIdx]).filter(Boolean) : [];
+
+    const userIds = new Set<string>();
+    if (emails.length) {
+      const { data } = await supabase.from("profiles").select("id, email").in("email", emails);
+      (data ?? []).forEach((p: any) => userIds.add(p.id));
+    }
+    if (matricules.length) {
+      const { data } = await supabase.from("personnel").select("id, matricule").in("matricule", matricules);
+      (data ?? []).forEach((p: any) => userIds.add(p.id));
+    }
+    if (userIds.size === 0) return toast.error("Aucun étudiant correspondant trouvé");
+
+    const ids = Array.from(userIds);
+    const { data: existing } = await supabase
+      .from("cohort_members").select("user_id").eq("cohort_id", membersFor.id).in("user_id", ids);
+    const existingSet = new Set((existing ?? []).map((m: any) => m.user_id));
+    const toInsert = ids.filter((id) => !existingSet.has(id)).map((user_id) => ({ cohort_id: membersFor.id, user_id }));
+    if (toInsert.length === 0) { toast.info("Tous les membres trouvés sont déjà présents"); return; }
+    const { error } = await supabase.from("cohort_members").insert(toInsert);
+    if (error) return toast.error(error.message);
+    toast.success(`${toInsert.length} membre(s) ajouté(s) sur ${rows.length} ligne(s) (${ids.length} trouvés)`);
+    loadMembers(membersFor);
+  };
+
   return (
     <AppLayout>
       <div className="container py-8 max-w-4xl">
@@ -220,7 +258,17 @@ export default function AdminCohorts() {
               <div className="flex gap-2">
                 <Input placeholder="Rechercher un étudiant (nom ou email)" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSearch()} />
                 <Button variant="outline" onClick={doSearch}>Rechercher</Button>
+                <Button variant="outline" asChild>
+                  <label className="cursor-pointer">
+                    <Upload className="h-4 w-4 mr-1" />Importer CSV
+                    <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.target.value = ""; }} />
+                  </label>
+                </Button>
               </div>
+              <p className="text-xs text-muted-foreground -mt-2">
+                Format CSV attendu : une colonne <code>email</code> (recommandé) et/ou <code>matricule</code>, séparées par <code>,</code> <code>;</code> ou tabulation. Exemple : <code>email,matricule</code> puis <code>jean.dupont@univ.mg,MAT001</code>. Sans en-tête, la première colonne est traitée comme email.
+              </p>
+
               {results.length > 0 && (
                 <div className="surface-card p-2 space-y-1">
                   {results.map((r) => (
