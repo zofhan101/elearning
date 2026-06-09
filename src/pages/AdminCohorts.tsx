@@ -42,6 +42,9 @@ export default function AdminCohorts() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [personnelList, setPersonnelList] = useState<any[]>([]);
   const [personnelSearch, setPersonnelSearch] = useState("");
+  const [quickNom, setQuickNom] = useState("");
+  const [quickPrenom, setQuickPrenom] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const load = async () => {
     const { data } = await supabase.from("cohorts").select("*").order("name");
@@ -313,14 +316,50 @@ export default function AdminCohorts() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) setPersonnelSearch(""); }}>
+        <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) { setPersonnelSearch(""); setQuickNom(""); setQuickPrenom(""); } }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Ajouter un membre — {membersFor?.name}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <Input placeholder="Filtrer par nom, prénom, mention…" value={personnelSearch} onChange={(e) => setPersonnelSearch(e.target.value)} />
-              <div className="max-h-[420px] overflow-y-auto space-y-1">
+            <div className="space-y-4">
+              <div className="surface-card p-3 space-y-2">
+                <div className="text-sm font-medium">Créer et ajouter un nouveau membre</div>
+                <div className="flex flex-wrap gap-2">
+                  <Input className="flex-1 min-w-[140px]" placeholder="Nom *" value={quickNom} onChange={(e) => setQuickNom(e.target.value)} />
+                  <Input className="flex-1 min-w-[140px]" placeholder="Prénom" value={quickPrenom} onChange={(e) => setQuickPrenom(e.target.value)} />
+                  <Button
+                    disabled={creating || !quickNom.trim() || !membersFor}
+                    onClick={async () => {
+                      if (!membersFor) return;
+                      setCreating(true);
+                      const { data, error } = await supabase
+                        .from("personnel")
+                        .insert({ nom: quickNom.trim(), prenom: quickPrenom.trim() || null } as any)
+                        .select("id")
+                        .single();
+                      if (error || !data) { setCreating(false); return toast.error(error?.message ?? "Erreur"); }
+                      const { error: e2 } = await supabase
+                        .from("cohort_members")
+                        .insert({ cohort_id: membersFor.id, user_id: data.id });
+                      setCreating(false);
+                      if (e2) return toast.error(e2.message);
+                      toast.success("Membre créé et ajouté");
+                      setQuickNom(""); setQuickPrenom("");
+                      await openPicker();
+                      loadMembers(membersFor);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />Ajouter
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Pour renseigner plus de champs (date naissance, mention, parcours…), utilisez Administration → Membres.</p>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2">Choisir un membre existant</div>
+                <Input placeholder="Filtrer par nom, prénom, mention…" value={personnelSearch} onChange={(e) => setPersonnelSearch(e.target.value)} />
+              </div>
+              <div className="max-h-[360px] overflow-y-auto space-y-1">
                 {personnelList
                   .filter((p) => {
                     if (!personnelSearch.trim()) return true;
@@ -344,7 +383,7 @@ export default function AdminCohorts() {
                     );
                   })}
                 {personnelList.length === 0 && (
-                  <div className="text-sm text-muted-foreground text-center py-6">Aucun membre disponible. Créez-en depuis Administration → Membres.</div>
+                  <div className="text-sm text-muted-foreground text-center py-6">Aucun membre existant. Utilisez le formulaire ci-dessus pour en créer un.</div>
                 )}
               </div>
             </div>
