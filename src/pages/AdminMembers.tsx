@@ -31,6 +31,11 @@ const PARCOURS = [
   { v: "electroradiologie", l: "Électroradiologie" },
 ];
 const NIVEAUX = ["L1", "L2", "L3", "A4", "A5", "A6", "A7", "A8"];
+const ROLES = [
+  { v: "enseignant", l: "Enseignant" },
+  { v: "pat", l: "PAT" },
+  { v: "etudiant", l: "Étudiant" },
+];
 const ANY = "__any__";
 
 interface Member {
@@ -43,9 +48,10 @@ interface Member {
   mention: string | null;
   parcours: string | null;
   niveau: string | null;
+  member_role: "enseignant" | "pat" | "etudiant" | null;
 }
 
-const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", mention: null, parcours: null, niveau: null };
+const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", mention: null, parcours: null, niveau: null, member_role: null };
 
 export default function AdminMembers() {
   const [list, setList] = useState<Member[]>([]);
@@ -62,6 +68,8 @@ export default function AdminMembers() {
 
   const save = async () => {
     if (!editing.nom?.trim()) return toast.error("Nom requis");
+    if (!editing.member_role) return toast.error("Rôle requis");
+    if (editing.member_role === "etudiant" && !editing.niveau) return toast.error("Niveau requis pour un étudiant");
     const payload: any = {
       nom: editing.nom,
       prenom: editing.prenom || null,
@@ -70,7 +78,8 @@ export default function AdminMembers() {
       adresse: editing.adresse || null,
       mention: editing.mention || null,
       parcours: editing.parcours || null,
-      niveau: editing.niveau || null,
+      niveau: editing.member_role === "etudiant" ? (editing.niveau || null) : null,
+      member_role: editing.member_role,
     };
     if (editing.id) {
       const { error } = await supabase.from("personnel").update(payload).eq("id", editing.id);
@@ -161,9 +170,23 @@ export default function AdminMembers() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Niveau</Label>
-                  <Select value={editing.niveau ?? ANY} onValueChange={(v) => setEditing({ ...editing, niveau: v === ANY ? null : v })}>
+                  <Label>Rôle *</Label>
+                  <Select value={editing.member_role ?? ANY} onValueChange={(v) => setEditing({ ...editing, member_role: v === ANY ? null : (v as any), niveau: v === "etudiant" ? editing.niveau : null })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ANY}>—</SelectItem>
+                      {ROLES.map((r) => <SelectItem key={r.v} value={r.v}>{r.l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Niveau{editing.member_role === "etudiant" ? " *" : ""}</Label>
+                  <Select
+                    value={editing.niveau ?? ANY}
+                    onValueChange={(v) => setEditing({ ...editing, niveau: v === ANY ? null : v })}
+                    disabled={editing.member_role !== null && editing.member_role !== "etudiant"}
+                  >
+                    <SelectTrigger><SelectValue placeholder={editing.member_role && editing.member_role !== "etudiant" ? "Non applicable" : "—"} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value={ANY}>—</SelectItem>
                       {NIVEAUX.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
@@ -190,6 +213,7 @@ export default function AdminMembers() {
               <TableRow>
                 <TableHead>Nom</TableHead>
                 <TableHead>Prénom</TableHead>
+                <TableHead>Rôle</TableHead>
                 <TableHead>Sexe</TableHead>
                 <TableHead>Mention</TableHead>
                 <TableHead>Parcours</TableHead>
@@ -202,6 +226,7 @@ export default function AdminMembers() {
                 <TableRow key={m.id}>
                   <TableCell className="font-medium">{m.nom}</TableCell>
                   <TableCell>{m.prenom}</TableCell>
+                  <TableCell>{ROLES.find((x) => x.v === m.member_role)?.l ?? ""}</TableCell>
                   <TableCell>{m.sexe}</TableCell>
                   <TableCell>{MENTIONS.find((x) => x.v === m.mention)?.l ?? ""}</TableCell>
                   <TableCell>{PARCOURS.find((x) => x.v === m.parcours)?.l ?? ""}</TableCell>
@@ -217,7 +242,7 @@ export default function AdminMembers() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucun membre.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucun membre.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

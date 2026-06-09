@@ -405,6 +405,7 @@ export type Database = {
           email_personnel: string | null
           id: string
           matricule: string | null
+          member_role: Database["public"]["Enums"]["member_role_type"] | null
           mention: Database["public"]["Enums"]["mention_type"] | null
           mere: string | null
           niveau: Database["public"]["Enums"]["niveau_etude"] | null
@@ -423,6 +424,7 @@ export type Database = {
           email_personnel?: string | null
           id?: string
           matricule?: string | null
+          member_role?: Database["public"]["Enums"]["member_role_type"] | null
           mention?: Database["public"]["Enums"]["mention_type"] | null
           mere?: string | null
           niveau?: Database["public"]["Enums"]["niveau_etude"] | null
@@ -441,6 +443,7 @@ export type Database = {
           email_personnel?: string | null
           id?: string
           matricule?: string | null
+          member_role?: Database["public"]["Enums"]["member_role_type"] | null
           mention?: Database["public"]["Enums"]["mention_type"] | null
           mere?: string | null
           niveau?: Database["public"]["Enums"]["niveau_etude"] | null
@@ -700,6 +703,7 @@ export type Database = {
         | "video"
         | "file"
       eval_mode: "individual" | "group"
+      member_role_type: "enseignant" | "pat" | "etudiant"
       mention_type:
         | "medecine_humaine"
         | "pharmacie"
@@ -865,6 +869,7 @@ export const Constants = {
         "file",
       ],
       eval_mode: ["individual", "group"],
+      member_role_type: ["enseignant", "pat", "etudiant"],
       mention_type: [
         "medecine_humaine",
         "pharmacie",
