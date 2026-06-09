@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, Link2, Play, BookMarked, Plus, Calendar, ChevronRight } from "lucide-react";
+import { FileText, Link2, Play, BookMarked, Plus, Calendar, ChevronRight, Download, File, Video, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,19 @@ const KIND_ICON: any = {
   reading: BookMarked,
   link: Link2,
   text: FileText,
-  video: Play,
+  video: Video,
+  file: File,
+  image: ImageIcon,
 };
+
+function iconForUrl(url?: string | null) {
+  if (!url) return FileText;
+  const u = url.toLowerCase();
+  if (/\.(mp4|webm|mov|m4v|avi|mkv)(\?|$)/.test(u)) return Video;
+  if (/\.(png|jpe?g|gif|webp|svg)(\?|$)/.test(u)) return ImageIcon;
+  if (/\.(pdf|docx?|pptx?|xlsx?|zip|rar)(\?|$)/.test(u)) return File;
+  return Link2;
+}
 
 export default function CourseModules() {
   const { id } = useParams();
@@ -93,18 +104,54 @@ export default function CourseModules() {
                         </div>
                         <div className="space-y-2">
                           {(list as any[]).map((b) => {
-                            const Icon = KIND_ICON[b.kind] ?? FileText;
-                            return (
-                              <div key={b.id} className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border">
+                            const Icon = KIND_ICON[b.kind] ?? iconForUrl(b.url);
+                            const isVideo = b.kind === "video" || /\.(mp4|webm|mov|m4v)(\?|$)/i.test(b.url ?? "");
+                            const isImage = b.kind === "image" || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(b.url ?? "");
+                            const isPdf = /\.pdf(\?|$)/i.test(b.url ?? "");
+                            const content = (
+                              <div className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
                                 <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
                                   <Icon className="h-4 w-4" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm">{b.title}</div>
+                                  <div className="font-medium text-sm flex items-center gap-2">
+                                    <span className="truncate">{b.title}</span>
+                                    {b.url && <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                                  </div>
                                   {b.body && <p className="text-sm text-muted-foreground mt-0.5">{b.body}</p>}
                                   {b.meta && <div className="text-xs text-muted-foreground mt-1">{b.meta}</div>}
+                                  {b.url && (isVideo || isImage || isPdf) && (
+                                    <div className="mt-3">
+                                      {isVideo && (
+                                        <video src={b.url} controls className="w-full max-h-[480px] rounded-md bg-black" />
+                                      )}
+                                      {isImage && (
+                                        <img src={b.url} alt={b.title} className="w-full max-h-[480px] rounded-md object-contain bg-muted" />
+                                      )}
+                                      {isPdf && (
+                                        <iframe src={b.url} title={b.title} className="w-full h-[600px] rounded-md border border-border bg-card" />
+                                      )}
+                                    </div>
+                                  )}
+                                  {b.url && (
+                                    <div className="mt-2 flex gap-2">
+                                      <a href={b.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                        <Link2 className="h-3 w-3" /> Ouvrir
+                                      </a>
+                                      <a href={b.url} download className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                        <Download className="h-3 w-3" /> Télécharger
+                                      </a>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
+                            );
+                            return b.url && !(isVideo || isImage || isPdf) ? (
+                              <a key={b.id} href={b.url} target="_blank" rel="noopener noreferrer" className="block">
+                                {content}
+                              </a>
+                            ) : (
+                              <div key={b.id}>{content}</div>
                             );
                           })}
                         </div>
