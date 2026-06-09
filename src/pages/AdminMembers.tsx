@@ -170,9 +170,23 @@ export default function AdminMembers() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Niveau</Label>
-                  <Select value={editing.niveau ?? ANY} onValueChange={(v) => setEditing({ ...editing, niveau: v === ANY ? null : v })}>
+                  <Label>Rôle *</Label>
+                  <Select value={editing.member_role ?? ANY} onValueChange={(v) => setEditing({ ...editing, member_role: v === ANY ? null : (v as any), niveau: v === "etudiant" ? editing.niveau : null })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ANY}>—</SelectItem>
+                      {ROLES.map((r) => <SelectItem key={r.v} value={r.v}>{r.l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Niveau{editing.member_role === "etudiant" ? " *" : ""}</Label>
+                  <Select
+                    value={editing.niveau ?? ANY}
+                    onValueChange={(v) => setEditing({ ...editing, niveau: v === ANY ? null : v })}
+                    disabled={editing.member_role !== null && editing.member_role !== "etudiant"}
+                  >
+                    <SelectTrigger><SelectValue placeholder={editing.member_role && editing.member_role !== "etudiant" ? "Non applicable" : "—"} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value={ANY}>—</SelectItem>
                       {NIVEAUX.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
