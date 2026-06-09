@@ -42,6 +42,9 @@ export default function AdminCohorts() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [personnelList, setPersonnelList] = useState<any[]>([]);
   const [personnelSearch, setPersonnelSearch] = useState("");
+  const [quickNom, setQuickNom] = useState("");
+  const [quickPrenom, setQuickPrenom] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const load = async () => {
     const { data } = await supabase.from("cohorts").select("*").order("name");
