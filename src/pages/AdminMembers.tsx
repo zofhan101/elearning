@@ -68,6 +68,8 @@ export default function AdminMembers() {
 
   const save = async () => {
     if (!editing.nom?.trim()) return toast.error("Nom requis");
+    if (!editing.member_role) return toast.error("Rôle requis");
+    if (editing.member_role === "etudiant" && !editing.niveau) return toast.error("Niveau requis pour un étudiant");
     const payload: any = {
       nom: editing.nom,
       prenom: editing.prenom || null,
@@ -76,7 +78,8 @@ export default function AdminMembers() {
       adresse: editing.adresse || null,
       mention: editing.mention || null,
       parcours: editing.parcours || null,
-      niveau: editing.niveau || null,
+      niveau: editing.member_role === "etudiant" ? (editing.niveau || null) : null,
+      member_role: editing.member_role,
     };
     if (editing.id) {
       const { error } = await supabase.from("personnel").update(payload).eq("id", editing.id);
