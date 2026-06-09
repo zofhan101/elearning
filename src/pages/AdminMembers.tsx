@@ -213,6 +213,7 @@ export default function AdminMembers() {
               <TableRow>
                 <TableHead>Nom</TableHead>
                 <TableHead>Prénom</TableHead>
+                <TableHead>Rôle</TableHead>
                 <TableHead>Sexe</TableHead>
                 <TableHead>Mention</TableHead>
                 <TableHead>Parcours</TableHead>
@@ -225,6 +226,7 @@ export default function AdminMembers() {
                 <TableRow key={m.id}>
                   <TableCell className="font-medium">{m.nom}</TableCell>
                   <TableCell>{m.prenom}</TableCell>
+                  <TableCell>{ROLES.find((x) => x.v === m.member_role)?.l ?? ""}</TableCell>
                   <TableCell>{m.sexe}</TableCell>
                   <TableCell>{MENTIONS.find((x) => x.v === m.mention)?.l ?? ""}</TableCell>
                   <TableCell>{PARCOURS.find((x) => x.v === m.parcours)?.l ?? ""}</TableCell>
