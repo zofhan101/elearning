@@ -31,6 +31,11 @@ const PARCOURS = [
   { v: "electroradiologie", l: "Électroradiologie" },
 ];
 const NIVEAUX = ["L1", "L2", "L3", "A4", "A5", "A6", "A7", "A8"];
+const ROLES = [
+  { v: "enseignant", l: "Enseignant" },
+  { v: "pat", l: "PAT" },
+  { v: "etudiant", l: "Étudiant" },
+];
 const ANY = "__any__";
 
 interface Member {
@@ -43,9 +48,10 @@ interface Member {
   mention: string | null;
   parcours: string | null;
   niveau: string | null;
+  member_role: "enseignant" | "pat" | "etudiant" | null;
 }
 
-const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", mention: null, parcours: null, niveau: null };
+const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", mention: null, parcours: null, niveau: null, member_role: null };
 
 export default function AdminMembers() {
   const [list, setList] = useState<Member[]>([]);
