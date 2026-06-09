@@ -242,7 +242,7 @@ export default function AdminMembers() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucun membre.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucun membre.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
