@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, Link2, Play, BookMarked, Plus, Calendar, ChevronRight } from "lucide-react";
+import { FileText, Link2, Play, BookMarked, Plus, Calendar, ChevronRight, Download, File, Video, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,19 @@ const KIND_ICON: any = {
   reading: BookMarked,
   link: Link2,
   text: FileText,
-  video: Play,
+  video: Video,
+  file: File,
+  image: ImageIcon,
 };
+
+function iconForUrl(url?: string | null) {
+  if (!url) return FileText;
+  const u = url.toLowerCase();
+  if (/\.(mp4|webm|mov|m4v|avi|mkv)(\?|$)/.test(u)) return Video;
+  if (/\.(png|jpe?g|gif|webp|svg)(\?|$)/.test(u)) return ImageIcon;
+  if (/\.(pdf|docx?|pptx?|xlsx?|zip|rar)(\?|$)/.test(u)) return File;
+  return Link2;
+}
 
 export default function CourseModules() {
   const { id } = useParams();
