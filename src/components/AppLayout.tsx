@@ -28,7 +28,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <Link to="/" className="flex items-center gap-2">
             <img src={logoFmm} alt="Faculty of Medicine Antananarivo" className="h-10 w-10 object-contain" />
             <div className="leading-tight">
-              <div className="font-semibold text-foreground text-base">Faculty of Medicine Antananarivo</div>
+              <div className="font-semibold text-foreground text-base">Healthy Paths Project</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Learning space</div>
             </div>
           </Link>
@@ -124,7 +124,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <span>Terms of Use</span>
             <span>Privacy & Cookies</span>
           </div>
-          <div>Faculty of Medicine Antananarivo · English</div>
+          <div>LARTIC Laboratory - Faculty of Medicine Antananarivo · English</div>
         </div>
       </footer>
     </div>
