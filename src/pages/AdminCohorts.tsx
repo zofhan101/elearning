@@ -21,6 +21,11 @@ const PARCOURS = [
   { v: "madagascar", l: "Madagascar" },
   { v: "indonesia", l: "Indonesia" },
 ];
+const ROLES = [
+  { v: "enseignant", l: "Instructor" },
+  { v: "pat", l: "PAT" },
+  { v: "etudiant", l: "Student" },
+];
 
 const ANY = "__any__";
 
@@ -50,6 +55,12 @@ export default function AdminCohorts() {
   const [personnelSearch, setPersonnelSearch] = useState("");
   const [quickNom, setQuickNom] = useState("");
   const [quickPrenom, setQuickPrenom] = useState("");
+  const [quickDateNaissance, setQuickDateNaissance] = useState("");
+  const [quickSexe, setQuickSexe] = useState<"M" | "F" | "">("");
+  const [quickAdresse, setQuickAdresse] = useState("");
+  const [quickMention, setQuickMention] = useState("");
+  const [quickParcours, setQuickParcours] = useState("");
+  const [quickRole, setQuickRole] = useState<"enseignant" | "pat" | "etudiant" | "">("");
   const [creating, setCreating] = useState(false);
 
   const load = async () => {
@@ -311,25 +322,98 @@ export default function AdminCohorts() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) { setPersonnelSearch(""); setQuickNom(""); setQuickPrenom(""); } }}>
+        <Dialog open={pickerOpen} onOpenChange={(o) => {
+          setPickerOpen(o);
+          if (!o) {
+            setPersonnelSearch(""); setQuickNom(""); setQuickPrenom("");
+            setQuickDateNaissance(""); setQuickSexe(""); setQuickAdresse("");
+            setQuickMention(""); setQuickParcours(""); setQuickRole("");
+          }
+        }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Add a Member — {membersFor?.name}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="surface-card p-3 space-y-2">
+              <div className="surface-card p-3 space-y-3">
                 <div className="text-sm font-medium">Create and Add a New Member</div>
-                <div className="flex flex-wrap gap-2">
-                  <Input className="flex-1 min-w-[140px]" placeholder="Last Name *" value={quickNom} onChange={(e) => setQuickNom(e.target.value)} />
-                  <Input className="flex-1 min-w-[140px]" placeholder="First Name" value={quickPrenom} onChange={(e) => setQuickPrenom(e.target.value)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Last Name *</Label>
+                    <Input value={quickNom} onChange={(e) => setQuickNom(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>First Name</Label>
+                    <Input value={quickPrenom} onChange={(e) => setQuickPrenom(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Date of Birth</Label>
+                    <Input type="date" value={quickDateNaissance} onChange={(e) => setQuickDateNaissance(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Gender</Label>
+                    <Select value={quickSexe || ANY} onValueChange={(v) => setQuickSexe(v === ANY ? "" : (v as "M" | "F"))}>
+                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ANY}>—</SelectItem>
+                        <SelectItem value="M">Male</SelectItem>
+                        <SelectItem value="F">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Address</Label>
+                    <Input value={quickAdresse} onChange={(e) => setQuickAdresse(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Program</Label>
+                    <Select value={quickMention || ANY} onValueChange={(v) => setQuickMention(v === ANY ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ANY}>—</SelectItem>
+                        {MENTIONS.map((m) => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Country</Label>
+                    <Select value={quickParcours || ANY} onValueChange={(v) => setQuickParcours(v === ANY ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ANY}>—</SelectItem>
+                        {PARCOURS.map((m) => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Role *</Label>
+                    <Select value={quickRole || ANY} onValueChange={(v) => setQuickRole(v === ANY ? "" : (v as "enseignant" | "pat" | "etudiant"))}>
+                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ANY}>—</SelectItem>
+                        {ROLES.map((r) => <SelectItem key={r.v} value={r.v}>{r.l}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end">
                   <Button
-                    disabled={creating || !quickNom.trim() || !membersFor}
+                    disabled={creating || !quickNom.trim() || !quickRole || !membersFor}
                     onClick={async () => {
                       if (!membersFor) return;
                       setCreating(true);
                       const { data, error } = await supabase
                         .from("personnel")
-                        .insert({ nom: quickNom.trim(), prenom: quickPrenom.trim() || null } as any)
+                        .insert({
+                          nom: quickNom.trim(),
+                          prenom: quickPrenom.trim() || null,
+                          date_naissance: quickDateNaissance || null,
+                          sexe: quickSexe || null,
+                          adresse: quickAdresse.trim() || null,
+                          mention: quickMention || null,
+                          parcours: quickParcours || null,
+                          member_role: quickRole || null,
+                        } as any)
                         .select("id")
                         .single();
                       if (error || !data) { setCreating(false); return toast.error(error?.message ?? "Error"); }
@@ -339,7 +423,9 @@ export default function AdminCohorts() {
                       setCreating(false);
                       if (e2) return toast.error(e2.message);
                       toast.success("Member created and added");
-                      setQuickNom(""); setQuickPrenom("");
+                      setQuickNom(""); setQuickPrenom(""); setQuickDateNaissance("");
+                      setQuickSexe(""); setQuickAdresse(""); setQuickMention("");
+                      setQuickParcours(""); setQuickRole("");
                       await openPicker();
                       loadMembers(membersFor);
                     }}
@@ -347,7 +433,6 @@ export default function AdminCohorts() {
                     <Plus className="h-4 w-4 mr-1" />Add
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">To fill in more fields (date of birth, program, track…), use Administration → Members.</p>
               </div>
 
               <div>
