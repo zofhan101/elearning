@@ -50,7 +50,7 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center gradient-soft p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src={logoFmm} alt="Faculty of Medicine Antananarivo" className="h-20 w-20 mx-auto mb-4 object-contain" />
+          <img src={logoFmm} alt="Healthy Paths Project Logo" className="h-32 w-32 mx-auto mb-4 object-contain" />
           
           <h1 className="text-3xl font-semibold text-foreground">Healthy Paths Project</h1>
           <p className="text-muted-foreground mt-1">Your learning space</p>
@@ -86,7 +86,7 @@ export default function AuthPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          LARTIC Laboratory | Faculty of Medicine Antananarivo — Learning space.
+          LARTIC Laboratory ~ Faculty of Medicine Antananarivo — Learning space.
         </p>
       </div>
     </div>
