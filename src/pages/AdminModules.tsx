@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { SortableList } from "@/components/SortableList";
 import { RichTextEditor } from "@/components/RichTextEditor";
-import { CohortSelect } from "@/components/CohortSelect";
 import { toast } from "sonner";
 
 interface Module {
@@ -19,7 +18,6 @@ interface Module {
   position: number;
   start_date: string | null;
   end_date: string | null;
-  cohort_id: string | null;
 }
 
 export default function AdminModules() {
@@ -47,7 +45,6 @@ export default function AdminModules() {
       description: editing.description || null,
       start_date: editing.start_date || null,
       end_date: editing.end_date || null,
-      cohort_id: editing.cohort_id ?? null,
     };
     if (editing.id) {
       const { error } = await supabase.from("modules").update(payload).eq("id", editing.id);
@@ -115,10 +112,6 @@ export default function AdminModules() {
                     <Label>End Date</Label>
                     <Input type="date" value={editing.end_date ?? ""} onChange={(e) => setEditing({ ...editing, end_date: e.target.value })} />
                   </div>
-                </div>
-                <div>
-                  <Label>Target Cohort (optional)</Label>
-                  <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Inherits from course —" />
                 </div>
               </div>
               <DialogFooter>
