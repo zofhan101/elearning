@@ -11,9 +11,16 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 
-const MENTIONS = ["medecine_humaine", "pharmacie", "medecine_veterinaire", "sciences_paramedicales"];
-const PARCOURS = ["tronc_commun", "medecine_humaine", "medecine_veterinaire", "pharmacie", "anesthesie", "maieutique", "infirmier_generaliste", "massokinesitherapie", "ergotherapie", "technique_appareillage", "technique_laboratoire", "electroradiologie"];
-const NIVEAUX = ["L1", "L2", "L3", "A4", "A5", "A6", "A7", "A8"];
+const MENTIONS = [
+  { v: "blended_learning", l: "Blended Learning" },
+  { v: "summer_school", l: "Summer School" },
+  { v: "field_trip", l: "Field Trip" },
+];
+const PARCOURS = [
+  { v: "germany", l: "Germany" },
+  { v: "madagascar", l: "Madagascar" },
+  { v: "indonesia", l: "Indonesia" },
+];
 
 const ANY = "__any__";
 
@@ -23,12 +30,11 @@ interface Cohort {
   description: string | null;
   mention: string | null;
   parcours: string | null;
-  niveau: string | null;
 }
 
 interface Member { id: string; user_id: string; full_name?: string; email?: string }
 
-const empty: Partial<Cohort> = { name: "", description: "", mention: null, parcours: null, niveau: null };
+const empty: Partial<Cohort> = { name: "", description: "", mention: null, parcours: null };
 
 export default function AdminCohorts() {
   const { user } = useAuth();
@@ -59,7 +65,6 @@ export default function AdminCohorts() {
       description: editing.description || null,
       mention: editing.mention || null,
       parcours: editing.parcours || null,
-      niveau: editing.niveau || null,
     };
     if (editing.id) {
       const { error } = await supabase.from("cohorts").update(payload).eq("id", editing.id);
@@ -116,7 +121,7 @@ export default function AdminCohorts() {
 
   const openPicker = async () => {
     setPickerOpen(true);
-    const { data } = await supabase.from("personnel").select("id, nom, prenom, mention, parcours, niveau").order("nom").limit(500);
+    const { data } = await supabase.from("personnel").select("id, nom, prenom, mention, parcours").order("nom").limit(500);
     setPersonnelList((data as any) ?? []);
   };
 
@@ -189,34 +194,24 @@ export default function AdminCohorts() {
                   <Label>Description</Label>
                   <Textarea value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Program</Label>
                     <Select value={editing.mention ?? ANY} onValueChange={(v) => setEditing({ ...editing, mention: v === ANY ? null : v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={ANY}>— All —</SelectItem>
-                        {MENTIONS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {MENTIONS.map((m) => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Track</Label>
+                    <Label>Country</Label>
                     <Select value={editing.parcours ?? ANY} onValueChange={(v) => setEditing({ ...editing, parcours: v === ANY ? null : v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={ANY}>— All —</SelectItem>
-                        {PARCOURS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Level</Label>
-                    <Select value={editing.niveau ?? ANY} onValueChange={(v) => setEditing({ ...editing, niveau: v === ANY ? null : v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ANY}>— All —</SelectItem>
-                        {NIVEAUX.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {PARCOURS.map((m) => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -240,7 +235,7 @@ export default function AdminCohorts() {
                 <div className="font-medium">{c.name}</div>
                 {c.description && <div className="text-sm text-muted-foreground">{c.description}</div>}
                 <div className="text-xs text-muted-foreground mt-1">
-                  {[c.mention, c.parcours, c.niveau].filter(Boolean).join(" · ") || "Manual list only"}
+                  {[c.mention, c.parcours].filter(Boolean).join(" · ") || "Manual list only"}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -364,7 +359,7 @@ export default function AdminCohorts() {
                   .filter((p) => {
                     if (!personnelSearch.trim()) return true;
                     const q = personnelSearch.toLowerCase();
-                    return [p.nom, p.prenom, p.mention, p.parcours, p.niveau].some((v: any) => v?.toLowerCase().includes(q));
+                    return [p.nom, p.prenom, p.mention, p.parcours].some((v: any) => v?.toLowerCase().includes(q));
                   })
                   .map((p) => {
                     const already = members.some((m) => m.user_id === p.id);
@@ -373,7 +368,7 @@ export default function AdminCohorts() {
                         <div className="text-sm">
                           <div className="font-medium">{[p.nom, p.prenom].filter(Boolean).join(" ") || "—"}</div>
                           <div className="text-xs text-muted-foreground">
-                            {[p.mention, p.parcours, p.niveau].filter(Boolean).join(" · ")}
+                            {[p.mention, p.parcours].filter(Boolean).join(" · ")}
                           </div>
                         </div>
                         <Button size="sm" variant="outline" disabled={already} onClick={async () => { await addMember(p.id); }}>

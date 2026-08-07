@@ -11,26 +11,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 
 const MENTIONS = [
-  { v: "medecine_humaine", l: "Human Medicine" },
-  { v: "pharmacie", l: "Pharmacy" },
-  { v: "medecine_veterinaire", l: "Veterinary Medicine" },
-  { v: "sciences_paramedicales", l: "Paramedical Sciences" },
+  { v: "blended_learning", l: "Blended Learning" },
+  { v: "summer_school", l: "Summer School" },
+  { v: "field_trip", l: "Field Trip" },
 ];
 const PARCOURS = [
-  { v: "tronc_commun", l: "Common Core" },
-  { v: "medecine_humaine", l: "Human Medicine" },
-  { v: "medecine_veterinaire", l: "Veterinary Medicine" },
-  { v: "pharmacie", l: "Pharmacy" },
-  { v: "anesthesie", l: "Anesthesia" },
-  { v: "maieutique", l: "Midwifery" },
-  { v: "infirmier_generaliste", l: "General Nursing" },
-  { v: "massokinesitherapie", l: "Physical Therapy" },
-  { v: "ergotherapie", l: "Occupational Therapy" },
-  { v: "technique_appareillage", l: "Prosthetic Technology" },
-  { v: "technique_laboratoire", l: "Laboratory Technology" },
-  { v: "electroradiologie", l: "Radiologic Technology" },
+  { v: "germany", l: "Germany" },
+  { v: "madagascar", l: "Madagascar" },
+  { v: "indonesia", l: "Indonesia" },
 ];
-const NIVEAUX = ["L1", "L2", "L3", "A4", "A5", "A6", "A7", "A8"];
 const ROLES = [
   { v: "enseignant", l: "Instructor" },
   { v: "pat", l: "PAT" },
@@ -47,11 +36,10 @@ interface Member {
   adresse: string | null;
   mention: string | null;
   parcours: string | null;
-  niveau: string | null;
   member_role: "enseignant" | "pat" | "etudiant" | null;
 }
 
-const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", mention: null, parcours: null, niveau: null, member_role: null };
+const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", mention: null, parcours: null, member_role: null };
 
 export default function AdminMembers() {
   const [list, setList] = useState<Member[]>([]);
@@ -69,7 +57,6 @@ export default function AdminMembers() {
   const save = async () => {
     if (!editing.nom?.trim()) return toast.error("Name required");
     if (!editing.member_role) return toast.error("Role required");
-    if (editing.member_role === "etudiant" && !editing.niveau) return toast.error("Level required for a student");
     const payload: any = {
       nom: editing.nom,
       prenom: editing.prenom || null,
@@ -78,7 +65,6 @@ export default function AdminMembers() {
       adresse: editing.adresse || null,
       mention: editing.mention || null,
       parcours: editing.parcours || null,
-      niveau: editing.member_role === "etudiant" ? (editing.niveau || null) : null,
       member_role: editing.member_role,
     };
     if (editing.id) {
@@ -102,7 +88,7 @@ export default function AdminMembers() {
   const filtered = list.filter((m) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
-    return [m.nom, m.prenom, m.mention, m.parcours, m.niveau].some((v) => v?.toLowerCase().includes(q));
+    return [m.nom, m.prenom, m.mention, m.parcours].some((v) => v?.toLowerCase().includes(q));
   });
 
   return (
@@ -160,7 +146,7 @@ export default function AdminMembers() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Track</Label>
+                  <Label>Country</Label>
                   <Select value={editing.parcours ?? ANY} onValueChange={(v) => setEditing({ ...editing, parcours: v === ANY ? null : v })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
@@ -171,25 +157,11 @@ export default function AdminMembers() {
                 </div>
                 <div>
                   <Label>Role *</Label>
-                  <Select value={editing.member_role ?? ANY} onValueChange={(v) => setEditing({ ...editing, member_role: v === ANY ? null : (v as any), niveau: v === "etudiant" ? editing.niveau : null })}>
+                  <Select value={editing.member_role ?? ANY} onValueChange={(v) => setEditing({ ...editing, member_role: v === ANY ? null : (v as any) })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value={ANY}>—</SelectItem>
                       {ROLES.map((r) => <SelectItem key={r.v} value={r.v}>{r.l}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Level{editing.member_role === "etudiant" ? " *" : ""}</Label>
-                  <Select
-                    value={editing.niveau ?? ANY}
-                    onValueChange={(v) => setEditing({ ...editing, niveau: v === ANY ? null : v })}
-                    disabled={editing.member_role !== null && editing.member_role !== "etudiant"}
-                  >
-                    <SelectTrigger><SelectValue placeholder={editing.member_role && editing.member_role !== "etudiant" ? "Not applicable" : "—"} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ANY}>—</SelectItem>
-                      {NIVEAUX.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -204,7 +176,7 @@ export default function AdminMembers() {
 
         <div className="surface-card p-3 mb-4 flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <Input className="border-0 focus-visible:ring-0" placeholder="Search by name, program, track…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="border-0 focus-visible:ring-0" placeholder="Search by name, program, country…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
 
         <div className="surface-card overflow-x-auto">
@@ -216,8 +188,7 @@ export default function AdminMembers() {
                 <TableHead>Role</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Program</TableHead>
-                <TableHead>Track</TableHead>
-                <TableHead>Level</TableHead>
+                <TableHead>Country</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -230,7 +201,6 @@ export default function AdminMembers() {
                   <TableCell>{m.sexe}</TableCell>
                   <TableCell>{MENTIONS.find((x) => x.v === m.mention)?.l ?? ""}</TableCell>
                   <TableCell>{PARCOURS.find((x) => x.v === m.parcours)?.l ?? ""}</TableCell>
-                  <TableCell>{m.niveau}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => { setEditing(m); setOpen(true); }}>
                       <Pencil className="h-4 w-4" />
@@ -242,7 +212,7 @@ export default function AdminMembers() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No members.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No members.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

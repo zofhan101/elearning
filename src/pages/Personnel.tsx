@@ -11,12 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Upload, Search, Save } from "lucide-react";
 
-type Mention = "medecine_humaine" | "pharmacie" | "medecine_veterinaire" | "sciences_paramedicales";
-type Parcours =
-  | "anesthesie" | "maieutique" | "infirmier_generaliste" | "massokinesitherapie"
-  | "ergotherapie" | "technique_appareillage" | "technique_laboratoire" | "electroradiologie"
-  | "tronc_commun" | "medecine_humaine" | "medecine_veterinaire" | "pharmacie";
-type Niveau = "L1" | "L2" | "L3" | "A4" | "A5" | "A6" | "A7" | "A8";
+type Mention = "blended_learning" | "summer_school" | "field_trip";
+type Parcours = "germany" | "madagascar" | "indonesia";
 
 interface Personnel {
   id: string;
@@ -31,35 +27,18 @@ interface Personnel {
   email_institutionnel: string | null;
   mention: Mention | null;
   parcours: Parcours | null;
-  niveau: Niveau | null;
 }
 
 const MENTIONS: { value: Mention; label: string }[] = [
-  { value: "medecine_humaine", label: "Human Medicine" },
-  { value: "pharmacie", label: "Pharmacy" },
-  { value: "medecine_veterinaire", label: "Veterinary Medicine" },
-  { value: "sciences_paramedicales", label: "Paramedical Sciences" },
+  { value: "blended_learning", label: "Blended Learning" },
+  { value: "summer_school", label: "Summer School" },
+  { value: "field_trip", label: "Field Trip" },
 ];
 
 const PARCOURS: { value: Parcours; label: string }[] = [
-  { value: "tronc_commun", label: "Common Core" },
-  { value: "medecine_humaine", label: "Human Medicine" },
-  { value: "medecine_veterinaire", label: "Veterinary Medicine" },
-  { value: "pharmacie", label: "Pharmacy" },
-  { value: "anesthesie", label: "Anesthesia" },
-  { value: "maieutique", label: "Midwifery" },
-  { value: "infirmier_generaliste", label: "General Nursing" },
-  { value: "massokinesitherapie", label: "Physical Therapy" },
-  { value: "ergotherapie", label: "Occupational Therapy" },
-  { value: "technique_appareillage", label: "Prosthetic Technology" },
-  { value: "technique_laboratoire", label: "Laboratory Technology" },
-  { value: "electroradiologie", label: "Radiologic Technology" },
-];
-
-const NIVEAUX: { value: Niveau; label: string }[] = [
-  { value: "L1", label: "L1" }, { value: "L2", label: "L2" }, { value: "L3", label: "L3" },
-  { value: "A4", label: "Year 4" }, { value: "A5", label: "Year 5" },
-  { value: "A6", label: "Year 6" }, { value: "A7", label: "Year 7" }, { value: "A8", label: "Year 8" },
+  { value: "germany", label: "Germany" },
+  { value: "madagascar", label: "Madagascar" },
+  { value: "indonesia", label: "Indonesia" },
 ];
 
 const labelOf = <T extends string>(arr: { value: T; label: string }[], v: T | null) =>
@@ -160,7 +139,7 @@ export default function Personnel() {
                 <Input className="pl-9" placeholder="ID number, name, email…" value={search} onChange={e => setSearch(e.target.value)} />
               </div>
               <div className="text-xs text-muted-foreground">
-                Expected CSV format: columns <code>id, matricule, nom, prenom, date_naissance, adresse, pere, mere, email_personnel, email_institutionnel, mention, parcours, niveau</code>. The <code>id</code> field is the account UUID. One row per user.
+                Expected CSV format: columns <code>id, matricule, nom, prenom, date_naissance, adresse, pere, mere, email_personnel, email_institutionnel, mention, parcours</code>. The <code>id</code> field is the account UUID. One row per user.
               </div>
               <div className="rounded-lg border overflow-x-auto">
                 <Table>
@@ -171,14 +150,13 @@ export default function Personnel() {
                       <TableHead>First Name</TableHead>
                       <TableHead>Institutional Email</TableHead>
                       <TableHead>Program</TableHead>
-                      <TableHead>Track</TableHead>
-                      <TableHead>Level</TableHead>
+                      <TableHead>Country</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {loading && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Loading…</TableCell></TableRow>}
-                    {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No results</TableCell></TableRow>}
+                    {loading && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Loading…</TableCell></TableRow>}
+                    {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No results</TableCell></TableRow>}
                     {filtered.map(p => (
                       <TableRow key={p.id}>
                         <TableCell className="font-mono text-xs">{p.matricule ?? "—"}</TableCell>
@@ -187,7 +165,6 @@ export default function Personnel() {
                         <TableCell className="text-xs">{p.email_institutionnel ?? "—"}</TableCell>
                         <TableCell className="text-xs">{labelOf(MENTIONS, p.mention)}</TableCell>
                         <TableCell className="text-xs">{labelOf(PARCOURS, p.parcours)}</TableCell>
-                        <TableCell className="text-xs">{labelOf(NIVEAUX, p.niveau)}</TableCell>
                         <TableCell><Button size="sm" variant="ghost" onClick={() => setEditing(p)}>Edit</Button></TableCell>
                       </TableRow>
                     ))}
@@ -234,16 +211,10 @@ function PersonnelForm({ value, onSave, onCancel }: { value: Personnel; onSave: 
             <SelectContent>{MENTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Track">
+        <Field label="Country">
           <Select value={v.parcours ?? ""} onValueChange={(x) => set("parcours", x)}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>{PARCOURS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-          </Select>
-        </Field>
-        <Field label="Level of Study">
-          <Select value={v.niveau ?? ""} onValueChange={(x) => set("niveau", x)}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>{NIVEAUX.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
         <div className="md:col-span-2 flex justify-end gap-2 pt-2">
