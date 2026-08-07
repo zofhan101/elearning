@@ -113,7 +113,7 @@ export default function Quiz() {
       .from("attempts")
       .update({ submitted_at: new Date().toISOString(), score, max_score: totalPoints })
       .eq("id", attemptId!);
-    if (auto) toast.info("Temps écoulé — questionnaire soumis automatiquement.");
+    if (auto) toast.info("Time is up — questionnaire submitted automatically.");
     navigate(`/resultat/${attemptId}`);
   };
 
@@ -124,7 +124,7 @@ export default function Quiz() {
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="container py-3 flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Évaluation</div>
+            <div className="text-xs text-muted-foreground">Assessment</div>
             <h1 className="font-semibold truncate">{ev.title}</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -142,7 +142,7 @@ export default function Quiz() {
             </div>
             <Button onClick={() => submit(false)} disabled={submitting}>
               <Send className="h-4 w-4 mr-2" />
-              Soumettre
+              Submit
             </Button>
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function Quiz() {
                 <div className="shrink-0 flex items-center gap-2">
                   {qRemaining !== null && (
                     <span className={`text-xs font-mono px-2 py-1 rounded ${locked ? "bg-destructive/10 text-destructive" : qRemaining < 10 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
-                      {locked ? "Temps écoulé" : `${qRemaining}s`}
+                      {locked ? "Time's up" : `${qRemaining}s`}
                     </span>
                   )}
                   <span className="text-xs font-medium px-2 py-1 rounded bg-muted text-muted-foreground">
@@ -180,11 +180,11 @@ export default function Quiz() {
         })}
 
         <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm">
-          Soumettre le questionnaire vous permet de vérifier le mode de publication des résultats et de consulter le corrigé.
+          Submitting the questionnaire lets you check the results release mode and view the answer key.
         </div>
         <div className="flex justify-end">
           <Button size="lg" onClick={() => submit(false)} disabled={submitting}>
-            <Send className="h-4 w-4 mr-2" /> Soumettre le questionnaire
+            <Send className="h-4 w-4 mr-2" /> Submit Questionnaire
           </Button>
         </div>
       </main>
@@ -233,7 +233,7 @@ function QuestionInput({ q, value, onChange }: { q: Q; value: any; onChange: (v:
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-        placeholder="Votre réponse…"
+        placeholder="Your answer…"
       />
     );
   }
@@ -241,8 +241,8 @@ function QuestionInput({ q, value, onChange }: { q: Q; value: any; onChange: (v:
   const wc = String(value ?? "").trim().split(/\s+/).filter(Boolean).length;
   return (
     <div>
-      <Textarea value={value ?? ""} onChange={(e) => onChange(e.target.value)} rows={5} placeholder="Rédigez votre réponse…" />
-      <div className="text-xs text-muted-foreground mt-1">Nombre de mots : {wc}</div>
+      <Textarea value={value ?? ""} onChange={(e) => onChange(e.target.value)} rows={5} placeholder="Write your answer…" />
+      <div className="text-xs text-muted-foreground mt-1">Word count: {wc}</div>
     </div>
   );
 }

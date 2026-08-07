@@ -43,7 +43,7 @@ export function SortableItem({ id, children }: SortableItemProps) {
         className="flex items-center justify-center px-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
         {...attributes}
         {...listeners}
-        aria-label="Glisser pour réordonner"
+        aria-label="Drag to reorder"
       >
         <GripVertical className="h-4 w-4" />
       </button>

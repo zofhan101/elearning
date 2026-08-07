@@ -46,7 +46,7 @@ export default function AdminQuestions() {
   useEffect(() => { if (evalId) load(); }, [evalId]);
 
   const save = async () => {
-    if (!editing.prompt?.trim()) return toast.error("Énoncé requis");
+    if (!editing.prompt?.trim()) return toast.error("Prompt required");
     const payload: any = {
       prompt: editing.prompt,
       kind: editing.kind,
@@ -64,14 +64,14 @@ export default function AdminQuestions() {
       const { error } = await supabase.from("questions").insert(payload);
       if (error) return toast.error(error.message);
     }
-    toast.success("Enregistré");
+    toast.success("Saved");
     setOpen(false);
     setEditing(defaults);
     load();
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer cette question ?")) return;
+    if (!confirm("Delete this question?")) return;
     const { error } = await supabase.from("questions").delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
@@ -106,7 +106,7 @@ export default function AdminQuestions() {
     <AppLayout>
       <div className="container py-8 max-w-4xl">
         <Link to={`/admin/cours/${courseId}/evaluations`} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2">
-          <ChevronLeft className="h-4 w-4" />Retour aux évaluations
+          <ChevronLeft className="h-4 w-4" />Back to Assessments
         </Link>
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -115,23 +115,23 @@ export default function AdminQuestions() {
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(defaults); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-1" />Nouvelle question</Button>
+              <Button><Plus className="h-4 w-4 mr-1" />New Question</Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Modifier la question" : "Nouvelle question"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit Question" : "New Question"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
                     <Label>Type</Label>
-                    <Select value={editing.kind} onValueChange={(v: Kind) => setEditing({ ...editing, kind: v, correct: [], choices: v === "true_false" ? ["Vrai", "Faux"] : v === "short_text" ? null : ["", ""] })}>
+                    <Select value={editing.kind} onValueChange={(v: Kind) => setEditing({ ...editing, kind: v, correct: [], choices: v === "true_false" ? ["True", "False"] : v === "short_text" ? null : ["", ""] })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="single">Choix unique</SelectItem>
-                        <SelectItem value="multiple">Choix multiples</SelectItem>
-                        <SelectItem value="true_false">Vrai / Faux</SelectItem>
-                        <SelectItem value="short_text">Réponse courte</SelectItem>
+                        <SelectItem value="single">Single Choice</SelectItem>
+                        <SelectItem value="multiple">Multiple Choice</SelectItem>
+                        <SelectItem value="true_false">True / False</SelectItem>
+                        <SelectItem value="short_text">Short Answer</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -141,28 +141,28 @@ export default function AdminQuestions() {
                   </div>
                 </div>
                 <div>
-                  <Label>Chronomètre par question (secondes — optionnel)</Label>
+                  <Label>Timer per question (seconds — optional)</Label>
                   <Input
                     type="number"
                     min={0}
-                    placeholder="Aucune limite"
+                    placeholder="No limit"
                     value={editing.time_limit_seconds ?? ""}
                     onChange={(e) => setEditing({ ...editing, time_limit_seconds: e.target.value ? parseInt(e.target.value) : null })}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Si défini, la question passe automatiquement à la suivante après ce délai.</p>
+                  <p className="text-xs text-muted-foreground mt-1">If set, the question automatically advances to the next one after this delay.</p>
                 </div>
                 <div>
-                  <Label>Énoncé *</Label>
+                  <Label>Prompt *</Label>
                   <RichTextEditor value={editing.prompt ?? ""} onChange={(v) => setEditing({ ...editing, prompt: v })} />
                 </div>
                 {editing.kind !== "short_text" && (
                   <div>
-                    <Label>Choix</Label>
+                    <Label>Choices</Label>
                     <div className="space-y-2 mt-1">
                       {choices.map((c, i) => (
                         <div key={i} className="flex items-center gap-2">
                           <Checkbox checked={correct.includes(i)} onCheckedChange={() => toggleCorrect(i)} />
-                          <Input value={c} onChange={(e) => updateChoice(i, e.target.value)} placeholder={`Choix ${i + 1}`} disabled={editing.kind === "true_false"} />
+                          <Input value={c} onChange={(e) => updateChoice(i, e.target.value)} placeholder={`Choice ${i + 1}`} disabled={editing.kind === "true_false"} />
                           {editing.kind !== "true_false" && (
                             <Button variant="ghost" size="sm" onClick={() => removeChoice(i)}>
                               <Trash2 className="h-4 w-4" />
@@ -172,7 +172,7 @@ export default function AdminQuestions() {
                       ))}
                       {editing.kind !== "true_false" && (
                         <Button variant="outline" size="sm" onClick={addChoice}>
-                          <Plus className="h-4 w-4 mr-1" />Ajouter un choix
+                          <Plus className="h-4 w-4 mr-1" />Add a Choice
                         </Button>
                       )}
                     </div>
@@ -180,7 +180,7 @@ export default function AdminQuestions() {
                 )}
                 {editing.kind === "short_text" && (
                   <div>
-                    <Label>Réponse(s) attendue(s) (séparées par |)</Label>
+                    <Label>Expected Answer(s) (separated by |)</Label>
                     <Input
                       value={Array.isArray(editing.correct) ? editing.correct.join("|") : ""}
                       onChange={(e) => setEditing({ ...editing, correct: e.target.value.split("|").map((s) => s.trim()).filter(Boolean) })}
@@ -189,8 +189,8 @@ export default function AdminQuestions() {
                 )}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                <Button onClick={save}>Enregistrer</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={save}>Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -215,7 +215,7 @@ export default function AdminQuestions() {
           )}
         />
         {questions.length === 0 && (
-          <div className="surface-card p-8 text-center text-muted-foreground mt-3">Aucune question.</div>
+          <div className="surface-card p-8 text-center text-muted-foreground mt-3">No questions.</div>
         )}
       </div>
     </AppLayout>

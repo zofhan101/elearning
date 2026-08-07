@@ -35,31 +35,31 @@ interface Personnel {
 }
 
 const MENTIONS: { value: Mention; label: string }[] = [
-  { value: "medecine_humaine", label: "Médecine Humaine" },
-  { value: "pharmacie", label: "Pharmacie" },
-  { value: "medecine_veterinaire", label: "Médecine Vétérinaire" },
-  { value: "sciences_paramedicales", label: "Sciences Paramédicales" },
+  { value: "medecine_humaine", label: "Human Medicine" },
+  { value: "pharmacie", label: "Pharmacy" },
+  { value: "medecine_veterinaire", label: "Veterinary Medicine" },
+  { value: "sciences_paramedicales", label: "Paramedical Sciences" },
 ];
 
 const PARCOURS: { value: Parcours; label: string }[] = [
-  { value: "tronc_commun", label: "Tronc Commun" },
-  { value: "medecine_humaine", label: "Médecine Humaine" },
-  { value: "medecine_veterinaire", label: "Médecine Vétérinaire" },
-  { value: "pharmacie", label: "Pharmacie" },
-  { value: "anesthesie", label: "Anesthésie" },
-  { value: "maieutique", label: "Maïeutique" },
-  { value: "infirmier_generaliste", label: "Infirmier Généraliste" },
-  { value: "massokinesitherapie", label: "Massokinésithérapie" },
-  { value: "ergotherapie", label: "Ergothérapie" },
-  { value: "technique_appareillage", label: "Technique d'appareillage" },
-  { value: "technique_laboratoire", label: "Technique de Laboratoire" },
-  { value: "electroradiologie", label: "Électroradiologie" },
+  { value: "tronc_commun", label: "Common Core" },
+  { value: "medecine_humaine", label: "Human Medicine" },
+  { value: "medecine_veterinaire", label: "Veterinary Medicine" },
+  { value: "pharmacie", label: "Pharmacy" },
+  { value: "anesthesie", label: "Anesthesia" },
+  { value: "maieutique", label: "Midwifery" },
+  { value: "infirmier_generaliste", label: "General Nursing" },
+  { value: "massokinesitherapie", label: "Physical Therapy" },
+  { value: "ergotherapie", label: "Occupational Therapy" },
+  { value: "technique_appareillage", label: "Prosthetic Technology" },
+  { value: "technique_laboratoire", label: "Laboratory Technology" },
+  { value: "electroradiologie", label: "Radiologic Technology" },
 ];
 
 const NIVEAUX: { value: Niveau; label: string }[] = [
   { value: "L1", label: "L1" }, { value: "L2", label: "L2" }, { value: "L3", label: "L3" },
-  { value: "A4", label: "4è Année" }, { value: "A5", label: "5è Année" },
-  { value: "A6", label: "6è Année" }, { value: "A7", label: "7è Année" }, { value: "A8", label: "8è Année" },
+  { value: "A4", label: "Year 4" }, { value: "A5", label: "Year 5" },
+  { value: "A6", label: "Year 6" }, { value: "A7", label: "Year 7" }, { value: "A8", label: "Year 8" },
 ];
 
 const labelOf = <T extends string>(arr: { value: T; label: string }[], v: T | null) =>
@@ -103,7 +103,7 @@ export default function Personnel() {
     const { id, ...payload } = row;
     const { error } = await supabase.from("personnel").update(payload).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Enregistré");
+    toast.success("Saved");
     setEditing(null);
     load();
   };
@@ -111,11 +111,11 @@ export default function Personnel() {
   const importCsv = async (file: File) => {
     const text = await file.text();
     const rows = parseCsv(text);
-    if (!rows.length) return toast.error("CSV vide");
+    if (!rows.length) return toast.error("Empty CSV");
     const required = ["id"];
     const headers = Object.keys(rows[0]);
     if (!required.every(r => headers.includes(r))) {
-      return toast.error("Le CSV doit contenir au minimum la colonne 'id' (UUID du compte utilisateur)");
+      return toast.error("The CSV must contain at minimum the 'id' column (user account UUID)");
     }
     let ok = 0, fail = 0;
     for (const r of rows) {
@@ -128,7 +128,7 @@ export default function Personnel() {
       const { error } = await supabase.from("personnel").update(clean).eq("id", id);
       if (error) fail++; else ok++;
     }
-    toast.success(`Import terminé : ${ok} mis à jour, ${fail} échec(s)`);
+    toast.success(`Import completed: ${ok} updated, ${fail} failed`);
     load();
   };
 
@@ -136,8 +136,8 @@ export default function Personnel() {
     <AppLayout>
       <div className="container py-8 space-y-8">
         <div>
-          <h1 className="text-2xl font-semibold">Mon dossier personnel</h1>
-          <p className="text-sm text-muted-foreground">Informations administratives et scolarité</p>
+          <h1 className="text-2xl font-semibold">My Personal File</h1>
+          <p className="text-sm text-muted-foreground">Administrative and academic information</p>
         </div>
 
         {me && <PersonnelForm value={me} onSave={save} />}
@@ -145,40 +145,40 @@ export default function Personnel() {
         {isAdmin && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Référentiel des utilisateurs</CardTitle>
+              <CardTitle>User Directory</CardTitle>
               <div className="flex gap-2">
                 <input ref={fileRef} type="file" accept=".csv" className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.target.value = ""; }} />
                 <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                  <Upload className="h-4 w-4 mr-2" />Importer CSV
+                  <Upload className="h-4 w-4 mr-2" />Import CSV
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input className="pl-9" placeholder="Matricule, nom, email…" value={search} onChange={e => setSearch(e.target.value)} />
+                <Input className="pl-9" placeholder="ID number, name, email…" value={search} onChange={e => setSearch(e.target.value)} />
               </div>
               <div className="text-xs text-muted-foreground">
-                Format CSV attendu : colonnes <code>id, matricule, nom, prenom, date_naissance, adresse, pere, mere, email_personnel, email_institutionnel, mention, parcours, niveau</code>. Le champ <code>id</code> est l'UUID du compte. Une ligne par utilisateur.
+                Expected CSV format: columns <code>id, matricule, nom, prenom, date_naissance, adresse, pere, mere, email_personnel, email_institutionnel, mention, parcours, niveau</code>. The <code>id</code> field is the account UUID. One row per user.
               </div>
               <div className="rounded-lg border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Matricule</TableHead>
-                      <TableHead>Nom</TableHead>
-                      <TableHead>Prénom</TableHead>
-                      <TableHead>Email institutionnel</TableHead>
-                      <TableHead>Mention</TableHead>
-                      <TableHead>Parcours</TableHead>
-                      <TableHead>Niveau</TableHead>
+                      <TableHead>ID Number</TableHead>
+                      <TableHead>Last Name</TableHead>
+                      <TableHead>First Name</TableHead>
+                      <TableHead>Institutional Email</TableHead>
+                      <TableHead>Program</TableHead>
+                      <TableHead>Track</TableHead>
+                      <TableHead>Level</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {loading && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Chargement…</TableCell></TableRow>}
-                    {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Aucun résultat</TableCell></TableRow>}
+                    {loading && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Loading…</TableCell></TableRow>}
+                    {!loading && filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No results</TableCell></TableRow>}
                     {filtered.map(p => (
                       <TableRow key={p.id}>
                         <TableCell className="font-mono text-xs">{p.matricule ?? "—"}</TableCell>
@@ -188,7 +188,7 @@ export default function Personnel() {
                         <TableCell className="text-xs">{labelOf(MENTIONS, p.mention)}</TableCell>
                         <TableCell className="text-xs">{labelOf(PARCOURS, p.parcours)}</TableCell>
                         <TableCell className="text-xs">{labelOf(NIVEAUX, p.niveau)}</TableCell>
-                        <TableCell><Button size="sm" variant="ghost" onClick={() => setEditing(p)}>Éditer</Button></TableCell>
+                        <TableCell><Button size="sm" variant="ghost" onClick={() => setEditing(p)}>Edit</Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -200,7 +200,7 @@ export default function Personnel() {
 
         {editing && (
           <Card className="border-primary">
-            <CardHeader><CardTitle>Édition — {editing.nom} {editing.prenom}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Editing — {editing.nom} {editing.prenom}</CardTitle></CardHeader>
             <CardContent>
               <PersonnelForm value={editing} onSave={save} onCancel={() => setEditing(null)} />
             </CardContent>
@@ -219,36 +219,36 @@ function PersonnelForm({ value, onSave, onCancel }: { value: Personnel; onSave: 
   return (
     <Card>
       <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Field label="N° Matricule"><Input value={v.matricule ?? ""} onChange={e => set("matricule", e.target.value)} /></Field>
-        <Field label="Date de naissance"><Input type="date" value={v.date_naissance ?? ""} onChange={e => set("date_naissance", e.target.value)} /></Field>
-        <Field label="Nom"><Input value={v.nom ?? ""} onChange={e => set("nom", e.target.value)} /></Field>
-        <Field label="Prénom"><Input value={v.prenom ?? ""} onChange={e => set("prenom", e.target.value)} /></Field>
-        <Field label="Adresse" full><Input value={v.adresse ?? ""} onChange={e => set("adresse", e.target.value)} /></Field>
-        <Field label="Père"><Input value={v.pere ?? ""} onChange={e => set("pere", e.target.value)} /></Field>
-        <Field label="Mère"><Input value={v.mere ?? ""} onChange={e => set("mere", e.target.value)} /></Field>
-        <Field label="Email personnel"><Input type="email" value={v.email_personnel ?? ""} onChange={e => set("email_personnel", e.target.value)} /></Field>
-        <Field label="Email institutionnel"><Input type="email" value={v.email_institutionnel ?? ""} onChange={e => set("email_institutionnel", e.target.value)} /></Field>
-        <Field label="Mention">
+        <Field label="ID Number"><Input value={v.matricule ?? ""} onChange={e => set("matricule", e.target.value)} /></Field>
+        <Field label="Date of Birth"><Input type="date" value={v.date_naissance ?? ""} onChange={e => set("date_naissance", e.target.value)} /></Field>
+        <Field label="Last Name"><Input value={v.nom ?? ""} onChange={e => set("nom", e.target.value)} /></Field>
+        <Field label="First Name"><Input value={v.prenom ?? ""} onChange={e => set("prenom", e.target.value)} /></Field>
+        <Field label="Address" full><Input value={v.adresse ?? ""} onChange={e => set("adresse", e.target.value)} /></Field>
+        <Field label="Father"><Input value={v.pere ?? ""} onChange={e => set("pere", e.target.value)} /></Field>
+        <Field label="Mother"><Input value={v.mere ?? ""} onChange={e => set("mere", e.target.value)} /></Field>
+        <Field label="Personal Email"><Input type="email" value={v.email_personnel ?? ""} onChange={e => set("email_personnel", e.target.value)} /></Field>
+        <Field label="Institutional Email"><Input type="email" value={v.email_institutionnel ?? ""} onChange={e => set("email_institutionnel", e.target.value)} /></Field>
+        <Field label="Program">
           <Select value={v.mention ?? ""} onValueChange={(x) => set("mention", x)}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>{MENTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Parcours">
+        <Field label="Track">
           <Select value={v.parcours ?? ""} onValueChange={(x) => set("parcours", x)}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>{PARCOURS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
-        <Field label="Niveau d'étude">
+        <Field label="Level of Study">
           <Select value={v.niveau ?? ""} onValueChange={(x) => set("niveau", x)}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>{NIVEAUX.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
         <div className="md:col-span-2 flex justify-end gap-2 pt-2">
-          {onCancel && <Button variant="ghost" onClick={onCancel}>Annuler</Button>}
-          <Button onClick={() => onSave(v)}><Save className="h-4 w-4 mr-2" />Enregistrer</Button>
+          {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
+          <Button onClick={() => onSave(v)}><Save className="h-4 w-4 mr-2" />Save</Button>
         </div>
       </CardContent>
     </Card>

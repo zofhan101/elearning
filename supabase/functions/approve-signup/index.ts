@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Non autorisé" }, 401);
+    if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     });
     const { data: userData } = await userClient.auth.getUser();
     const caller = userData.user;
-    if (!caller) return json({ error: "Non authentifié" }, 401);
+    if (!caller) return json({ error: "Not authenticated" }, 401);
 
     // Admin client
     const admin = createClient(supabaseUrl, serviceKey);
@@ -35,11 +35,11 @@ Deno.serve(async (req) => {
       .eq("user_id", caller.id)
       .eq("role", "admin")
       .maybeSingle();
-    if (!roleRow) return json({ error: "Réservé aux administrateurs" }, 403);
+    if (!roleRow) return json({ error: "Reserved for administrators" }, 403);
 
     const { request_id, action, admin_notes } = await req.json();
     if (!request_id || !["approve", "reject"].includes(action)) {
-      return json({ error: "Paramètres invalides" }, 400);
+      return json({ error: "Invalid parameters" }, 400);
     }
 
     const { data: reqRow, error: reqErr } = await admin
@@ -47,8 +47,8 @@ Deno.serve(async (req) => {
       .select("*")
       .eq("id", request_id)
       .maybeSingle();
-    if (reqErr || !reqRow) return json({ error: "Demande introuvable" }, 404);
-    if (reqRow.status !== "pending") return json({ error: "Demande déjà traitée" }, 400);
+    if (reqErr || !reqRow) return json({ error: "Request not found" }, 404);
+    if (reqRow.status !== "pending") return json({ error: "Request already processed" }, 400);
 
     if (action === "reject") {
       await admin

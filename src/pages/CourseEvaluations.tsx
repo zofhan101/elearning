@@ -23,22 +23,22 @@ export default function CourseEvaluations() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold">Évaluations</h1>
+        <h1 className="text-3xl font-semibold">Assessments</h1>
         {isStaff && (
           <Button variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-2" /> Ajouter une évaluation
+            <Plus className="h-4 w-4 mr-2" /> Add an assessment
           </Button>
         )}
       </div>
 
       <div className="surface-card overflow-hidden">
         <div className="grid grid-cols-12 px-5 py-3 bg-muted/50 text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border">
-          <div className="col-span-6">Titre</div>
-          <div className="col-span-2">Mode de travail</div>
-          <div className="col-span-4">Déroulement</div>
+          <div className="col-span-6">Title</div>
+          <div className="col-span-2">Work Mode</div>
+          <div className="col-span-4">Schedule</div>
         </div>
         {evals.length === 0 && (
-          <div className="p-8 text-center text-sm text-muted-foreground">Aucune évaluation pour le moment.</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">No assessments yet.</div>
         )}
         {evals.map((e) => (
           <Link
@@ -49,25 +49,25 @@ export default function CourseEvaluations() {
             <div className="col-span-6">
               <div className="font-medium text-foreground">{e.title}</div>
               <div className="text-xs text-muted-foreground mt-0.5">
-                Questionnaire en ligne — {e.total_points} points
+                Online questionnaire — {e.total_points} points
               </div>
             </div>
             <div className="col-span-2 text-sm flex items-center gap-1.5 text-muted-foreground">
-              <User className="h-3.5 w-3.5" /> {e.mode === "individual" ? "Individuel" : "Groupe"}
+              <User className="h-3.5 w-3.5" /> {e.mode === "individual" ? "Individual" : "Group"}
             </div>
             <div className="col-span-4 text-sm">
               {e.scheduled_at && (
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>
-                    {new Date(e.scheduled_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
-                    {" "}à{" "}
-                    {new Date(e.scheduled_at).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(e.scheduled_at).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
+                    {" "}at{" "}
+                    {new Date(e.scheduled_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
               )}
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                <Clock className="h-3 w-3" /> Minuterie : {e.duration_minutes} minutes
+                <Clock className="h-3 w-3" /> Timer: {e.duration_minutes} minutes
               </div>
             </div>
           </Link>
@@ -75,8 +75,8 @@ export default function CourseEvaluations() {
       </div>
 
       <div className="surface-card p-5 text-sm text-muted-foreground">
-        <strong className="text-foreground">Politiques et règlements applicables aux évaluations.</strong>{" "}
-        Consultez la page Politiques et règlements pour en prendre connaissance.
+        <strong className="text-foreground">Policies and regulations applicable to assessments.</strong>{" "}
+        Refer to the Policies and Regulations page to learn more.
       </div>
     </div>
   );

@@ -57,10 +57,10 @@ interface SFile {
 }
 
 const audienceLabel: Record<Audience, string> = {
-  teachers: "Enseignants",
-  students: "Étudiants",
-  staff_admin: "Personnel adm. & technique",
-  all: "Tout le monde",
+  teachers: "Instructors",
+  students: "Students",
+  staff_admin: "Administrative & Technical Staff",
+  all: "Everyone",
 };
 const audienceIcon: Record<Audience, any> = {
   teachers: GraduationCap,
@@ -71,9 +71,9 @@ const audienceIcon: Record<Audience, any> = {
 
 function formatSize(b: number | null) {
   if (!b) return "—";
-  if (b < 1024) return `${b} o`;
-  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} Ko`;
-  return `${(b / 1024 / 1024).toFixed(1)} Mo`;
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function DraggableFile({ file, canWrite, onDelete, onDownload, onShare }: { file: SFile; canWrite: boolean; onDelete: () => void; onDownload: () => void; onShare: () => void }) {
@@ -101,7 +101,7 @@ function DraggableFile({ file, canWrite, onDelete, onDownload, onShare }: { file
       </div>
       <Button variant="ghost" size="icon" onClick={onDownload}><Download className="h-4 w-4" /></Button>
       {canWrite && (
-        <Button variant="ghost" size="icon" onClick={onShare} title="Partager avec"><Share2 className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" onClick={onShare} title="Share with"><Share2 className="h-4 w-4" /></Button>
       )}
       {canWrite && (
         <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
@@ -127,7 +127,7 @@ function DroppableFolder({ folder, canWrite, onOpen, onDelete, onShare }: { fold
         </div>
       </div>
       {canWrite && (
-        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onShare(); }} title="Partager avec"><Share2 className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onShare(); }} title="Share with"><Share2 className="h-4 w-4" /></Button>
       )}
       {canWrite && (
         <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
@@ -184,7 +184,7 @@ export default function Echanges() {
   };
 
   const createFolder = async () => {
-    if (!newFolder.name.trim()) return toast.error("Nom requis");
+    if (!newFolder.name.trim()) return toast.error("Name required");
     const { error } = await supabase.from("shared_folders").insert({
       name: newFolder.name.trim(),
       audience: newFolder.audience,
@@ -192,21 +192,21 @@ export default function Echanges() {
       created_by: user?.id,
     });
     if (error) return toast.error(error.message);
-    toast.success("Dossier créé");
+    toast.success("Folder created");
     setOpenNew(false);
     setNewFolder({ name: "", audience: "all" });
     load();
   };
 
   const removeFolder = async (id: string) => {
-    if (!confirm("Supprimer ce dossier et tout son contenu ?")) return;
+    if (!confirm("Delete this folder and all its contents?")) return;
     const { error } = await supabase.from("shared_folders").delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
   };
 
   const removeFile = async (file: SFile) => {
-    if (!confirm("Supprimer ce fichier ?")) return;
+    if (!confirm("Delete this file?")) return;
     await supabase.storage.from("shared-files").remove([file.storage_path]);
     const { error } = await supabase.from("shared_files").delete().eq("id", file.id);
     if (error) return toast.error(error.message);
@@ -215,18 +215,18 @@ export default function Echanges() {
 
   const download = async (file: SFile) => {
     const { data, error } = await supabase.storage.from("shared-files").createSignedUrl(file.storage_path, 3600);
-    if (error || !data) return toast.error("Téléchargement impossible");
+    if (error || !data) return toast.error("Download not possible");
     window.open(data.signedUrl, "_blank");
   };
 
   const uploadFiles = async (filesList: FileList | File[]) => {
-    if (!currentFolder) return toast.error("Ouvrez un dossier d'abord");
+    if (!currentFolder) return toast.error("Open a folder first");
     if (!user) return;
     const arr = Array.from(filesList);
     for (const file of arr) {
       const path = `${currentFolder.id}/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
       const { error: upErr } = await supabase.storage.from("shared-files").upload(path, file);
-      if (upErr) { toast.error(`${file.name} : ${upErr.message}`); continue; }
+      if (upErr) { toast.error(`${file.name}: ${upErr.message}`); continue; }
       const { error: dbErr } = await supabase.from("shared_files").insert({
         folder_id: currentFolder.id,
         name: file.name,
@@ -235,9 +235,9 @@ export default function Echanges() {
         size_bytes: file.size,
         uploaded_by: user.id,
       });
-      if (dbErr) toast.error(`${file.name} : ${dbErr.message}`);
+      if (dbErr) toast.error(`${file.name}: ${dbErr.message}`);
     }
-    toast.success("Fichiers téléversés");
+    toast.success("Files uploaded");
     load();
   };
 
@@ -249,7 +249,7 @@ export default function Echanges() {
     if (!fileId || !folderId) return;
     const { error } = await supabase.from("shared_files").update({ folder_id: folderId }).eq("id", fileId);
     if (error) toast.error(error.message);
-    else { toast.success("Fichier déplacé"); load(); }
+    else { toast.success("File moved"); load(); }
   };
 
   const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragOverDrop(true); };
@@ -277,10 +277,10 @@ export default function Echanges() {
       .limit(1);
     if (existing && existing.length > 0) return (existing[0] as any).id;
     const defaultName: Record<Audience, string> = {
-      teachers: "Espace Enseignants",
-      students: "Espace Étudiants",
-      staff_admin: "Espace Personnel adm. & technique",
-      all: "Espace partagé",
+      teachers: "Instructors Space",
+      students: "Students Space",
+      staff_admin: "Administrative & Technical Staff Space",
+      all: "Shared Space",
     };
     const { data: created, error } = await supabase
       .from("shared_folders")
@@ -300,7 +300,7 @@ export default function Echanges() {
         .update({ audience: shareAudience })
         .eq("id", folder.id);
       if (error) return toast.error(error.message);
-      toast.success(`Dossier partagé avec : ${audienceLabel[shareAudience]}`);
+      toast.success(`Folder shared with: ${audienceLabel[shareAudience]}`);
     } else {
       const file = shareTarget.item as SFile;
       const targetFolderId = await findOrCreateRootFolderForAudience(shareAudience);
@@ -310,17 +310,17 @@ export default function Echanges() {
         .update({ folder_id: targetFolderId })
         .eq("id", file.id);
       if (error) return toast.error(error.message);
-      toast.success(`Fichier partagé avec : ${audienceLabel[shareAudience]}`);
+      toast.success(`File shared with: ${audienceLabel[shareAudience]}`);
     }
     setShareTarget(null);
     load();
   };
 
-  // Permissions matrix (échanges croisés activés)
-  // - Admin : tout
-  // - Enseignant : écriture sur toutes les audiences (teachers, students, staff_admin, all)
-  // - PAT (staff_admin) : écriture sur toutes les audiences
-  // - Étudiant : lecture + download uniquement
+  // Permissions matrix (cross-sharing enabled)
+  // - Admin: everything
+  // - Instructor: write access on all audiences (teachers, students, staff_admin, all)
+  // - PAT (staff_admin): write access on all audiences
+  // - Student: read + download only
   const canWriteAudience = (a: Audience) => {
     if (isAdmin) return true;
     if (isInstructor || isStaffAdmin) return true;
@@ -336,38 +336,38 @@ export default function Echanges() {
       <div className="container py-8">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-semibold">Espace d'échanges</h1>
-            <p className="text-muted-foreground text-sm">Partagez des documents entre enseignants, étudiants et personnel administratif.</p>
+            <h1 className="text-2xl font-semibold">Exchange Space</h1>
+            <p className="text-muted-foreground text-sm">Share documents between instructors, students, and administrative staff.</p>
           </div>
           <div className="flex gap-2">
             {canCreateFolder && (
               <Dialog open={openNew} onOpenChange={setOpenNew}>
                 <DialogTrigger asChild>
-                  <Button variant="outline"><FolderPlus className="h-4 w-4 mr-1" />Nouveau dossier</Button>
+                  <Button variant="outline"><FolderPlus className="h-4 w-4 mr-1" />New Folder</Button>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogHeader><DialogTitle>Nouveau dossier</DialogTitle></DialogHeader>
+                  <DialogHeader><DialogTitle>New Folder</DialogTitle></DialogHeader>
                   <div className="space-y-3">
                     <div>
-                      <Label>Nom</Label>
+                      <Label>Name</Label>
                       <Input value={newFolder.name} onChange={(e) => setNewFolder({ ...newFolder, name: e.target.value })} />
                     </div>
                     <div>
-                      <Label>Visible par</Label>
+                      <Label>Visible to</Label>
                       <Select value={newFolder.audience} onValueChange={(v: Audience) => setNewFolder({ ...newFolder, audience: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {creatableAudiences.includes("all") && <SelectItem value="all">Tout le monde</SelectItem>}
-                          {creatableAudiences.includes("teachers") && <SelectItem value="teachers">Enseignants</SelectItem>}
-                          {creatableAudiences.includes("students") && <SelectItem value="students">Étudiants</SelectItem>}
-                          {creatableAudiences.includes("staff_admin") && <SelectItem value="staff_admin">Personnel administratif & technique</SelectItem>}
+                          {creatableAudiences.includes("all") && <SelectItem value="all">Everyone</SelectItem>}
+                          {creatableAudiences.includes("teachers") && <SelectItem value="teachers">Instructors</SelectItem>}
+                          {creatableAudiences.includes("students") && <SelectItem value="students">Students</SelectItem>}
+                          {creatableAudiences.includes("staff_admin") && <SelectItem value="staff_admin">Administrative & Technical Staff</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpenNew(false)}>Annuler</Button>
-                    <Button onClick={createFolder}>Créer</Button>
+                    <Button variant="outline" onClick={() => setOpenNew(false)}>Cancel</Button>
+                    <Button onClick={createFolder}>Create</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -376,7 +376,7 @@ export default function Echanges() {
               <>
                 <input ref={fileInputRef} type="file" multiple hidden onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
                 <Button onClick={() => fileInputRef.current?.click()}>
-                  <Upload className="h-4 w-4 mr-1" />Téléverser
+                  <Upload className="h-4 w-4 mr-1" />Upload
                 </Button>
               </>
             )}
@@ -385,7 +385,7 @@ export default function Echanges() {
 
         <div className="flex items-center gap-1 text-sm mb-4 flex-wrap">
           <button onClick={() => goTo(-1)} className="inline-flex items-center gap-1 hover:text-primary">
-            <Home className="h-4 w-4" />Racine
+            <Home className="h-4 w-4" />Root
           </button>
           {breadcrumbs.map((b, i) => (
             <span key={b.id} className="inline-flex items-center gap-1">
@@ -411,11 +411,11 @@ export default function Echanges() {
             >
               {canWriteCurrentFolder ? (
                 <div className="text-xs text-muted-foreground mb-3 text-center">
-                  Glissez-déposez vos fichiers ici pour les téléverser
+                  Drag and drop your files here to upload them
                 </div>
               ) : (
                 <div className="text-xs text-muted-foreground mb-3 text-center">
-                  Lecture seule — vous pouvez télécharger les fichiers de ce dossier.
+                  Read-only — you can download the files in this folder.
                 </div>
               )}
               <div className="grid gap-2">
@@ -423,14 +423,14 @@ export default function Echanges() {
                   <DraggableFile key={f.id} file={f} canWrite={canWriteCurrentFolder} onDelete={() => removeFile(f)} onDownload={() => download(f)} onShare={() => openShare("file", f)} />
                 ))}
                 {files.length === 0 && (
-                  <div className="text-center text-sm text-muted-foreground py-6">Aucun fichier dans ce dossier.</div>
+                  <div className="text-center text-sm text-muted-foreground py-6">No files in this folder.</div>
                 )}
               </div>
             </div>
           )}
           {!currentFolder && folders.length === 0 && (
             <div className="surface-card p-8 text-center text-muted-foreground">
-              Aucun dossier. {canCreateFolder && "Créez-en un pour commencer."}
+              No folders. {canCreateFolder && "Create one to get started."}
             </div>
           )}
         </DndContext>
@@ -439,11 +439,11 @@ export default function Echanges() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                Partager {shareTarget?.kind === "folder" ? "le dossier" : "le fichier"} « {shareTarget?.item.name} »
+                Share {shareTarget?.kind === "folder" ? "folder" : "file"} "{shareTarget?.item.name}"
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-2">
-              <Label>Choisissez le groupe destinataire</Label>
+              <Label>Choose the target group</Label>
               <div className="grid grid-cols-2 gap-2">
                 {(["teachers", "students", "staff_admin", "all"] as Audience[]).map((a) => {
                   const Icon = audienceIcon[a];
@@ -463,13 +463,13 @@ export default function Echanges() {
               </div>
               <p className="text-xs text-muted-foreground pt-2">
                 {shareTarget?.kind === "folder"
-                  ? "Le dossier deviendra visible et modifiable selon les droits du groupe sélectionné."
-                  : "Le fichier sera déplacé vers le dossier racine de ce groupe (créé automatiquement si nécessaire)."}
+                  ? "The folder will become visible and editable according to the selected group's permissions."
+                  : "The file will be moved to this group's root folder (created automatically if needed)."}
               </p>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShareTarget(null)}>Annuler</Button>
-              <Button onClick={confirmShare}>Partager</Button>
+              <Button variant="outline" onClick={() => setShareTarget(null)}>Cancel</Button>
+              <Button onClick={confirmShare}>Share</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

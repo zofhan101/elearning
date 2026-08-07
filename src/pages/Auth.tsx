@@ -13,12 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 const signInSchema = z.object({
-  email: z.string().trim().email("Adresse courriel invalide").max(255),
-  password: z.string().min(6, "Au moins 6 caractères").max(72),
+  email: z.string().trim().email("Invalid email address").max(255),
+  password: z.string().min(6, "At least 6 characters").max(72),
 });
 const requestSchema = z.object({
-  email: z.string().trim().email("Adresse courriel invalide").max(255),
-  fullName: z.string().trim().min(2, "Nom requis").max(100),
+  email: z.string().trim().email("Invalid email address").max(255),
+  fullName: z.string().trim().min(2, "Name required").max(100),
   motivation: z.string().trim().max(1000).optional(),
 });
 
@@ -51,7 +51,7 @@ export default function AuthPage() {
       if (error) throw error;
       navigate("/");
     } catch (err: any) {
-      toast.error(err.message ?? "Erreur de connexion");
+      toast.error(err.message ?? "Sign-in error");
     } finally {
       setBusy(false);
     }
@@ -73,16 +73,16 @@ export default function AuthPage() {
       });
       if (error) {
         if (error.code === "23505") {
-          toast.error("Une demande existe déjà pour ce courriel.");
+          toast.error("A request already exists for this email.");
         } else {
           throw error;
         }
         return;
       }
       setSubmitted(true);
-      toast.success("Demande envoyée. Un administrateur vous contactera.");
+      toast.success("Request sent. An administrator will contact you.");
     } catch (err: any) {
-      toast.error(err.message ?? "Erreur lors de l'envoi");
+      toast.error(err.message ?? "Error sending request");
     } finally {
       setBusy(false);
     }
@@ -92,34 +92,34 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center gradient-soft p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src={logoFmm} alt="Faculté de Médecine Antananarivo" className="h-20 w-20 mx-auto mb-4 object-contain" />
+          <img src={logoFmm} alt="Faculty of Medicine Antananarivo" className="h-20 w-20 mx-auto mb-4 object-contain" />
           
-          <h1 className="text-3xl font-semibold text-foreground">Faculté de Médecine Antananarivo</h1>
-          <p className="text-muted-foreground mt-1">Votre espace pédagogique</p>
+          <h1 className="text-3xl font-semibold text-foreground">Faculty of Medicine Antananarivo</h1>
+          <p className="text-muted-foreground mt-1">Your learning space</p>
         </div>
 
         <div className="surface-card p-6">
           <Tabs value={tab} onValueChange={(v) => { setTab(v as any); setSubmitted(false); }}>
             <TabsList className="grid grid-cols-2 w-full mb-6">
-              <TabsTrigger value="signin">Connexion</TabsTrigger>
-              <TabsTrigger value="request">Créer mon compte</TabsTrigger>
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="request">Create My Account</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin" className="m-0">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Courriel</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={signin.email}
                     onChange={(e) => setSignin({ ...signin, email: e.target.value })}
-                    placeholder="vous@univ-antananarivo.mg"
+                    placeholder="you@univ-antananarivo.mg"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -129,7 +129,7 @@ export default function AuthPage() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={busy}>
-                  {busy ? "Patientez…" : "Se connecter"}
+                  {busy ? "Please wait…" : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
@@ -140,55 +140,55 @@ export default function AuthPage() {
                   <div className="inline-flex h-12 w-12 rounded-full bg-emerald-100 items-center justify-center">
                     <Info className="h-6 w-6 text-emerald-700" />
                   </div>
-                  <h3 className="font-semibold">Demande envoyée</h3>
+                  <h3 className="font-semibold">Request Sent</h3>
                   <p className="text-sm text-muted-foreground">
-                    Un administrateur examinera votre demande. Vous recevrez un courriel d'invitation
-                    une fois la demande approuvée pour définir votre mot de passe.
+                    An administrator will review your request. You will receive an invitation email
+                    once the request is approved to set your password.
                   </p>
                   <Button variant="outline" onClick={() => { setTab("signin"); setSubmitted(false); }}>
-                    Retour à la connexion
+                    Back to Sign In
                   </Button>
                 </div>
               ) : (
                 <>
                   <div className="flex gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 mb-4">
                     <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span>Les nouveaux comptes doivent être validés par un administrateur. Vous recevrez un courriel d'invitation une fois votre demande approuvée.</span>
+                    <span>New accounts must be validated by an administrator. You will receive an invitation email once your request is approved.</span>
                   </div>
                   <form onSubmit={handleRequest} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">Nom complet</Label>
+                      <Label htmlFor="fullName">Full Name</Label>
                       <Input
                         id="fullName"
                         value={request.fullName}
                         onChange={(e) => setRequest({ ...request, fullName: e.target.value })}
-                        placeholder="Votre nom complet"
+                        placeholder="Your full name"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="reqEmail">Courriel</Label>
+                      <Label htmlFor="reqEmail">Email</Label>
                       <Input
                         id="reqEmail"
                         type="email"
                         value={request.email}
                         onChange={(e) => setRequest({ ...request, email: e.target.value })}
-                        placeholder="vous@univ-antananarivo.mg"
+                        placeholder="you@univ-antananarivo.mg"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="motivation">Motivation (optionnel)</Label>
+                      <Label htmlFor="motivation">Motivation (optional)</Label>
                       <Textarea
                         id="motivation"
                         value={request.motivation}
                         onChange={(e) => setRequest({ ...request, motivation: e.target.value })}
-                        placeholder="Programme, cohorte, raison de la demande…"
+                        placeholder="Program, cohort, reason for the request…"
                         className="min-h-[80px]"
                       />
                     </div>
                     <Button type="submit" className="w-full" disabled={busy}>
-                      {busy ? "Envoi…" : "Envoyer ma demande"}
+                      {busy ? "Sending…" : "Send My Request"}
                     </Button>
                   </form>
                 </>
@@ -198,7 +198,7 @@ export default function AuthPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Faculté de Médecine Antananarivo — Espace pédagogique.
+          Faculty of Medicine Antananarivo — Learning space.
         </p>
       </div>
     </div>

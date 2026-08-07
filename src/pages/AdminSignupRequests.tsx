@@ -49,10 +49,10 @@ export default function AdminSignupRequests() {
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(action === "approve" ? "Demande approuvée — invitation envoyée" : "Demande refusée");
+      toast.success(action === "approve" ? "Request approved — invitation sent" : "Request rejected");
       await load();
     } catch (e: any) {
-      toast.error(e.message ?? "Erreur");
+      toast.error(e.message ?? "Error");
     } finally {
       setBusyId(null);
     }
@@ -64,9 +64,9 @@ export default function AdminSignupRequests() {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="surface-card p-8 text-center max-w-md">
-          <h1 className="text-xl font-semibold mb-2">Accès réservé</h1>
-          <p className="text-muted-foreground mb-4">Cette page est réservée aux administrateurs.</p>
-          <Button asChild><Link to="/">Retour</Link></Button>
+          <h1 className="text-xl font-semibold mb-2">Restricted Access</h1>
+          <p className="text-muted-foreground mb-4">This page is restricted to administrators.</p>
+          <Button asChild><Link to="/">Back</Link></Button>
         </div>
       </div>
     );
@@ -78,18 +78,18 @@ export default function AdminSignupRequests() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <Link to="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2">
-              <ArrowLeft className="h-4 w-4 mr-1" /> Tableau de bord
+              <ArrowLeft className="h-4 w-4 mr-1" /> Dashboard
             </Link>
-            <h1 className="text-2xl font-semibold">Demandes d'inscription</h1>
-            <p className="text-muted-foreground text-sm">Approuvez ou refusez les nouvelles demandes de comptes.</p>
+            <h1 className="text-2xl font-semibold">Signup Requests</h1>
+            <p className="text-muted-foreground text-sm">Approve or reject new account requests.</p>
           </div>
           <Button variant="outline" onClick={load} disabled={fetching}>
-            {fetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Actualiser"}
+            {fetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
           </Button>
         </div>
 
         {items.length === 0 && !fetching && (
-          <div className="surface-card p-10 text-center text-muted-foreground">Aucune demande pour le moment.</div>
+          <div className="surface-card p-10 text-center text-muted-foreground">No requests yet.</div>
         )}
 
         <div className="space-y-3">
@@ -103,13 +103,13 @@ export default function AdminSignupRequests() {
                   </div>
                   <p className="text-sm text-muted-foreground">{r.email}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Soumis le {new Date(r.created_at).toLocaleString("fr-CA")}
+                    Submitted on {new Date(r.created_at).toLocaleString("en-US")}
                   </p>
                   {r.motivation && (
                     <p className="mt-3 text-sm whitespace-pre-wrap border-l-2 border-border pl-3">{r.motivation}</p>
                   )}
                   {r.admin_notes && (
-                    <p className="mt-2 text-xs text-muted-foreground">Note admin : {r.admin_notes}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">Admin note: {r.admin_notes}</p>
                   )}
                 </div>
               </div>
@@ -117,7 +117,7 @@ export default function AdminSignupRequests() {
               {r.status === "pending" && (
                 <div className="mt-4 space-y-2">
                   <Textarea
-                    placeholder="Note interne (optionnel)"
+                    placeholder="Internal note (optional)"
                     value={notes[r.id] ?? ""}
                     onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })}
                     className="min-h-[60px]"
@@ -125,10 +125,10 @@ export default function AdminSignupRequests() {
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => act(r.id, "approve")} disabled={busyId === r.id}>
                       {busyId === r.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
-                      Approuver
+                      Approve
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => act(r.id, "reject")} disabled={busyId === r.id}>
-                      <X className="h-4 w-4 mr-1" /> Refuser
+                      <X className="h-4 w-4 mr-1" /> Reject
                     </Button>
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export default function AdminSignupRequests() {
 }
 
 function StatusBadge({ status }: { status: Req["status"] }) {
-  if (status === "pending") return <Badge variant="secondary">En attente</Badge>;
-  if (status === "approved") return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approuvée</Badge>;
-  return <Badge variant="destructive">Refusée</Badge>;
+  if (status === "pending") return <Badge variant="secondary">Pending</Badge>;
+  if (status === "approved") return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
+  return <Badge variant="destructive">Rejected</Badge>;
 }

@@ -57,10 +57,10 @@ export default function CourseModules() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold">Contenu et activités</h1>
+        <h1 className="text-3xl font-semibold">Content and Activities</h1>
         {isStaff && (
           <Button variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-2" /> Ajouter à la liste des modules
+            <Plus className="h-4 w-4 mr-2" /> Add to Module List
           </Button>
         )}
       </div>
@@ -84,8 +84,8 @@ export default function CourseModules() {
                   {m.start_date && (
                     <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />
-                      Du {new Date(m.start_date).toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} au{" "}
-                      {new Date(m.end_date).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}
+                      From {new Date(m.start_date).toLocaleDateString("en-US", { day: "numeric", month: "long" })} to{" "}
+                      {new Date(m.end_date).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })}
                     </div>
                   )}
                 </div>
@@ -95,12 +95,12 @@ export default function CourseModules() {
               {isOpen && (
                 <div className="border-t border-border bg-muted/30 p-5 space-y-4">
                   {items.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">Aucun contenu pour ce module.</p>
+                    <p className="text-sm text-muted-foreground italic">No content for this module.</p>
                   ) : (
                     Object.entries(groupBy(items, "section")).map(([section, list]) => (
                       <div key={section}>
                         <div className="text-[10px] uppercase tracking-wider font-semibold text-primary mb-2">
-                          {section || "Contenu"}
+                          {section || "Content"}
                         </div>
                         <div className="space-y-2">
                           {(list as any[]).map((b) => {
@@ -136,10 +136,10 @@ export default function CourseModules() {
                                   {b.url && (
                                     <div className="mt-2 flex gap-2">
                                       <a href={b.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                        <Link2 className="h-3 w-3" /> Ouvrir
+                                        <Link2 className="h-3 w-3" /> Open
                                       </a>
                                       <a href={b.url} download className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                        <Download className="h-3 w-3" /> Télécharger
+                                        <Download className="h-3 w-3" /> Download
                                       </a>
                                     </div>
                                   )}
@@ -170,7 +170,7 @@ export default function CourseModules() {
 
 function groupBy<T extends Record<string, any>>(arr: T[], key: keyof T) {
   return arr.reduce<Record<string, T[]>>((acc, item) => {
-    const k = String(item[key] ?? "Contenu");
+    const k = String(item[key] ?? "Content");
     (acc[k] ||= []).push(item);
     return acc;
   }, {});

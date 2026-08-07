@@ -9,7 +9,7 @@ const NONE = "__none__";
 export function CohortSelect({
   value,
   onChange,
-  placeholder = "— Tous les étudiants —",
+  placeholder = "— All students —",
 }: {
   value: string | null | undefined;
   onChange: (v: string | null) => void;

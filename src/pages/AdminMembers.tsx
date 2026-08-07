@@ -11,30 +11,30 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 
 const MENTIONS = [
-  { v: "medecine_humaine", l: "Médecine Humaine" },
-  { v: "pharmacie", l: "Pharmacie" },
-  { v: "medecine_veterinaire", l: "Médecine Vétérinaire" },
-  { v: "sciences_paramedicales", l: "Sciences Paramédicales" },
+  { v: "medecine_humaine", l: "Human Medicine" },
+  { v: "pharmacie", l: "Pharmacy" },
+  { v: "medecine_veterinaire", l: "Veterinary Medicine" },
+  { v: "sciences_paramedicales", l: "Paramedical Sciences" },
 ];
 const PARCOURS = [
-  { v: "tronc_commun", l: "Tronc Commun" },
-  { v: "medecine_humaine", l: "Médecine Humaine" },
-  { v: "medecine_veterinaire", l: "Médecine Vétérinaire" },
-  { v: "pharmacie", l: "Pharmacie" },
-  { v: "anesthesie", l: "Anesthésie" },
-  { v: "maieutique", l: "Maïeutique" },
-  { v: "infirmier_generaliste", l: "Infirmier Généraliste" },
-  { v: "massokinesitherapie", l: "Massokinésithérapie" },
-  { v: "ergotherapie", l: "Ergothérapie" },
-  { v: "technique_appareillage", l: "Technique d'appareillage" },
-  { v: "technique_laboratoire", l: "Technique de Laboratoire" },
-  { v: "electroradiologie", l: "Électroradiologie" },
+  { v: "tronc_commun", l: "Common Core" },
+  { v: "medecine_humaine", l: "Human Medicine" },
+  { v: "medecine_veterinaire", l: "Veterinary Medicine" },
+  { v: "pharmacie", l: "Pharmacy" },
+  { v: "anesthesie", l: "Anesthesia" },
+  { v: "maieutique", l: "Midwifery" },
+  { v: "infirmier_generaliste", l: "General Nursing" },
+  { v: "massokinesitherapie", l: "Physical Therapy" },
+  { v: "ergotherapie", l: "Occupational Therapy" },
+  { v: "technique_appareillage", l: "Prosthetic Technology" },
+  { v: "technique_laboratoire", l: "Laboratory Technology" },
+  { v: "electroradiologie", l: "Radiologic Technology" },
 ];
 const NIVEAUX = ["L1", "L2", "L3", "A4", "A5", "A6", "A7", "A8"];
 const ROLES = [
-  { v: "enseignant", l: "Enseignant" },
+  { v: "enseignant", l: "Instructor" },
   { v: "pat", l: "PAT" },
-  { v: "etudiant", l: "Étudiant" },
+  { v: "etudiant", l: "Student" },
 ];
 const ANY = "__any__";
 
@@ -67,9 +67,9 @@ export default function AdminMembers() {
   useEffect(() => { load(); }, []);
 
   const save = async () => {
-    if (!editing.nom?.trim()) return toast.error("Nom requis");
-    if (!editing.member_role) return toast.error("Rôle requis");
-    if (editing.member_role === "etudiant" && !editing.niveau) return toast.error("Niveau requis pour un étudiant");
+    if (!editing.nom?.trim()) return toast.error("Name required");
+    if (!editing.member_role) return toast.error("Role required");
+    if (editing.member_role === "etudiant" && !editing.niveau) return toast.error("Level required for a student");
     const payload: any = {
       nom: editing.nom,
       prenom: editing.prenom || null,
@@ -88,12 +88,12 @@ export default function AdminMembers() {
       const { error } = await supabase.from("personnel").insert(payload);
       if (error) return toast.error(error.message);
     }
-    toast.success("Enregistré");
+    toast.success("Saved");
     setOpen(false); setEditing(empty); load();
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer ce membre ?")) return;
+    if (!confirm("Delete this member?")) return;
     const { error } = await supabase.from("personnel").delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
@@ -110,47 +110,47 @@ export default function AdminMembers() {
       <div className="container py-8 max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Membres</h1>
-            <p className="text-muted-foreground text-sm">Créez et gérez manuellement les membres (étudiants, personnel).</p>
+            <h1 className="text-2xl font-semibold">Members</h1>
+            <p className="text-muted-foreground text-sm">Manually create and manage members (students, staff).</p>
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />Nouveau membre</Button>
+              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />New Member</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Modifier le membre" : "Nouveau membre"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit Member" : "New Member"}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Nom *</Label>
+                  <Label>Last Name *</Label>
                   <Input value={editing.nom ?? ""} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Prénom</Label>
+                  <Label>First Name</Label>
                   <Input value={editing.prenom ?? ""} onChange={(e) => setEditing({ ...editing, prenom: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Date de naissance</Label>
+                  <Label>Date of Birth</Label>
                   <Input type="date" value={editing.date_naissance ?? ""} onChange={(e) => setEditing({ ...editing, date_naissance: e.target.value || null })} />
                 </div>
                 <div>
-                  <Label>Sexe</Label>
+                  <Label>Gender</Label>
                   <Select value={editing.sexe ?? ANY} onValueChange={(v) => setEditing({ ...editing, sexe: v === ANY ? null : (v as "M" | "F") })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value={ANY}>—</SelectItem>
-                      <SelectItem value="M">Masculin</SelectItem>
-                      <SelectItem value="F">Féminin</SelectItem>
+                      <SelectItem value="M">Male</SelectItem>
+                      <SelectItem value="F">Female</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-2">
-                  <Label>Adresse</Label>
+                  <Label>Address</Label>
                   <Input value={editing.adresse ?? ""} onChange={(e) => setEditing({ ...editing, adresse: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Mention</Label>
+                  <Label>Program</Label>
                   <Select value={editing.mention ?? ANY} onValueChange={(v) => setEditing({ ...editing, mention: v === ANY ? null : v })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
@@ -160,7 +160,7 @@ export default function AdminMembers() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Parcours</Label>
+                  <Label>Track</Label>
                   <Select value={editing.parcours ?? ANY} onValueChange={(v) => setEditing({ ...editing, parcours: v === ANY ? null : v })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
@@ -170,7 +170,7 @@ export default function AdminMembers() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Rôle *</Label>
+                  <Label>Role *</Label>
                   <Select value={editing.member_role ?? ANY} onValueChange={(v) => setEditing({ ...editing, member_role: v === ANY ? null : (v as any), niveau: v === "etudiant" ? editing.niveau : null })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
@@ -180,13 +180,13 @@ export default function AdminMembers() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Niveau{editing.member_role === "etudiant" ? " *" : ""}</Label>
+                  <Label>Level{editing.member_role === "etudiant" ? " *" : ""}</Label>
                   <Select
                     value={editing.niveau ?? ANY}
                     onValueChange={(v) => setEditing({ ...editing, niveau: v === ANY ? null : v })}
                     disabled={editing.member_role !== null && editing.member_role !== "etudiant"}
                   >
-                    <SelectTrigger><SelectValue placeholder={editing.member_role && editing.member_role !== "etudiant" ? "Non applicable" : "—"} /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={editing.member_role && editing.member_role !== "etudiant" ? "Not applicable" : "—"} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value={ANY}>—</SelectItem>
                       {NIVEAUX.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
@@ -195,8 +195,8 @@ export default function AdminMembers() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                <Button onClick={save}>Enregistrer</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={save}>Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -204,20 +204,20 @@ export default function AdminMembers() {
 
         <div className="surface-card p-3 mb-4 flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <Input className="border-0 focus-visible:ring-0" placeholder="Rechercher par nom, mention, parcours…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="border-0 focus-visible:ring-0" placeholder="Search by name, program, track…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
 
         <div className="surface-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Prénom</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Sexe</TableHead>
-                <TableHead>Mention</TableHead>
-                <TableHead>Parcours</TableHead>
-                <TableHead>Niveau</TableHead>
+                <TableHead>Last Name</TableHead>
+                <TableHead>First Name</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Gender</TableHead>
+                <TableHead>Program</TableHead>
+                <TableHead>Track</TableHead>
+                <TableHead>Level</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -242,7 +242,7 @@ export default function AdminMembers() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucun membre.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No members.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

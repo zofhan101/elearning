@@ -26,18 +26,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logoFmm} alt="Faculté de Médecine Antananarivo" className="h-10 w-10 object-contain" />
+            <img src={logoFmm} alt="Faculty of Medicine Antananarivo" className="h-10 w-10 object-contain" />
             <div className="leading-tight">
-              <div className="font-semibold text-foreground text-base">Faculté de Médecine Antananarivo</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Espace pédagogique</div>
+              <div className="font-semibold text-foreground text-base">Faculty of Medicine Antananarivo</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Learning space</div>
             </div>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            <NavItem to="/" icon={<LayoutDashboard className="h-4 w-4" />} label="Mon parcours" />
-            <NavItem to="/explorer" icon={<Compass className="h-4 w-4" />} label="Explorer" />
-            <NavItem to="/echanges" icon={<FolderKanban className="h-4 w-4" />} label="Échanges" />
-            <NavItem to="/personnel" icon={<IdCard className="h-4 w-4" />} label="Mon dossier" />
+            <NavItem to="/" icon={<LayoutDashboard className="h-4 w-4" />} label="My Path" />
+            <NavItem to="/explorer" icon={<Compass className="h-4 w-4" />} label="Explore" />
+            <NavItem to="/echanges" icon={<FolderKanban className="h-4 w-4" />} label="Discussions" />
+            <NavItem to="/personnel" icon={<IdCard className="h-4 w-4" />} label="My Profile" />
             {isStaff && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -48,14 +48,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate("/admin/cours")}>Cours & contenus</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/admin/cohortes")}>Cohortes</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/admin/cours")}>Courses & Content</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/admin/cohortes")}>Cohorts</DropdownMenuItem>
                   {isAdmin && (
-                    <DropdownMenuItem onClick={() => navigate("/admin/membres")}>Membres</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/admin/membres")}>Members</DropdownMenuItem>
                   )}
                   {isAdmin && (
                     <DropdownMenuItem onClick={() => navigate("/admin/inscriptions")}>
-                      <ShieldCheck className="h-4 w-4 mr-2" />Demandes d'inscription
+                      <ShieldCheck className="h-4 w-4 mr-2" />Signup Requests
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -66,14 +66,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2">
             {isStaff && (
               <span className="hidden sm:inline-flex text-xs font-medium px-2 py-1 rounded-md bg-primary-soft text-primary">
-                Enseignant
+                Instructor
               </span>
             )}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground">
               <UserIcon className="h-4 w-4" />
               <span className="max-w-[180px] truncate">{user?.email}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Se déconnecter">
+            <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
               <LogOut className="h-4 w-4" />
             </Button>
             <Button
@@ -91,20 +91,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {mobileOpen && (
           <nav className="md:hidden border-t border-border bg-card">
             <div className="container py-2 flex flex-col">
-              <MobileItem onClick={() => go("/")} icon={<LayoutDashboard className="h-4 w-4" />} label="Mon parcours" />
-              <MobileItem onClick={() => go("/explorer")} icon={<Compass className="h-4 w-4" />} label="Explorer" />
-              <MobileItem onClick={() => go("/echanges")} icon={<FolderKanban className="h-4 w-4" />} label="Échanges" />
-              <MobileItem onClick={() => go("/personnel")} icon={<IdCard className="h-4 w-4" />} label="Mon dossier" />
+              <MobileItem onClick={() => go("/")} icon={<LayoutDashboard className="h-4 w-4" />} label="My Path" />
+              <MobileItem onClick={() => go("/explorer")} icon={<Compass className="h-4 w-4" />} label="Explore" />
+              <MobileItem onClick={() => go("/echanges")} icon={<FolderKanban className="h-4 w-4" />} label="Discussions" />
+              <MobileItem onClick={() => go("/personnel")} icon={<IdCard className="h-4 w-4" />} label="My Profile" />
               {isStaff && (
                 <>
                   <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Administration</div>
-                  <MobileItem onClick={() => go("/admin/cours")} icon={<Settings className="h-4 w-4" />} label="Cours & contenus" />
-                  <MobileItem onClick={() => go("/admin/cohortes")} icon={<Settings className="h-4 w-4" />} label="Cohortes" />
+                  <MobileItem onClick={() => go("/admin/cours")} icon={<Settings className="h-4 w-4" />} label="Courses & Content" />
+                  <MobileItem onClick={() => go("/admin/cohortes")} icon={<Settings className="h-4 w-4" />} label="Cohorts" />
                   {isAdmin && (
-                    <MobileItem onClick={() => go("/admin/membres")} icon={<IdCard className="h-4 w-4" />} label="Membres" />
+                    <MobileItem onClick={() => go("/admin/membres")} icon={<IdCard className="h-4 w-4" />} label="Members" />
                   )}
                   {isAdmin && (
-                    <MobileItem onClick={() => go("/admin/inscriptions")} icon={<ShieldCheck className="h-4 w-4" />} label="Demandes d'inscription" />
+                    <MobileItem onClick={() => go("/admin/inscriptions")} icon={<ShieldCheck className="h-4 w-4" />} label="Signup Requests" />
                   )}
                 </>
               )}
@@ -118,13 +118,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <footer className="border-t border-border bg-card mt-12">
         <div className="container py-6 text-xs text-muted-foreground flex flex-wrap gap-x-6 gap-y-2 justify-between">
           <div className="flex flex-wrap gap-x-4">
-            <span>Contactez-nous</span>
-            <span>Centre d'aide</span>
-            <span>Accessibilité</span>
-            <span>Conditions d'utilisation</span>
-            <span>Confidentialité et témoins</span>
+            <span>Contact us</span>
+            <span>Help Center</span>
+            <span>Accessibility</span>
+            <span>Terms of Use</span>
+            <span>Privacy & Cookies</span>
           </div>
-          <div>Faculté de Médecine Antananarivo · Français</div>
+          <div>Faculty of Medicine Antananarivo · English</div>
         </div>
       </footer>
     </div>

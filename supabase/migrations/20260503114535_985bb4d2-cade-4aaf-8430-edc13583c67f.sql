@@ -1,4 +1,4 @@
--- Enums référentiel scolarité
+-- Academic reference enums
 CREATE TYPE public.mention_type AS ENUM (
   'medecine_humaine',
   'pharmacie',
@@ -21,7 +21,7 @@ CREATE TYPE public.niveau_etude AS ENUM (
   'L1','L2','L3','A4','A5','A6','A7','A8'
 );
 
--- Table référentiel personnel
+-- Personnel reference table
 CREATE TABLE public.personnel (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   matricule text UNIQUE,
@@ -56,7 +56,7 @@ CREATE TRIGGER personnel_touch_updated_at
 BEFORE UPDATE ON public.personnel
 FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
--- Auto-création d'une ligne personnel à chaque nouvel utilisateur
+-- Auto-create a personnel row for each new user
 CREATE OR REPLACE FUNCTION public.handle_new_user_personnel()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -75,7 +75,7 @@ CREATE TRIGGER on_auth_user_created_personnel
 AFTER INSERT ON auth.users
 FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_personnel();
 
--- Backfill pour les utilisateurs déjà existants
+-- Backfill for already existing users
 INSERT INTO public.personnel (id, email_institutionnel, nom)
 SELECT u.id, u.email, COALESCE(p.full_name, u.email)
 FROM auth.users u

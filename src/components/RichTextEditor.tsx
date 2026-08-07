@@ -12,7 +12,7 @@ interface Props {
   placeholder?: string;
 }
 
-export function RichTextEditor({ value, onChange, placeholder = "Écrire ici…" }: Props) {
+export function RichTextEditor({ value, onChange, placeholder = "Write here…" }: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -40,7 +40,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Écrire ici…"
 
   const setLink = () => {
     const prev = editor.getAttributes("link").href;
-    const url = window.prompt("URL du lien", prev || "https://");
+    const url = window.prompt("Link URL", prev || "https://");
     if (url === null) return;
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
@@ -65,35 +65,35 @@ export function RichTextEditor({ value, onChange, placeholder = "Écrire ici…"
   return (
     <div className="surface-card overflow-hidden">
       <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 border-b border-border bg-muted/40">
-        <Btn label="Gras" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
+        <Btn label="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
           <Bold className="h-4 w-4" />
         </Btn>
-        <Btn label="Italique" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}>
+        <Btn label="Italic" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}>
           <Italic className="h-4 w-4" />
         </Btn>
-        <Btn label="Titre 2" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+        <Btn label="Heading 2" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
           <Heading2 className="h-4 w-4" />
         </Btn>
-        <Btn label="Titre 3" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+        <Btn label="Heading 3" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
           <Heading3 className="h-4 w-4" />
         </Btn>
-        <Btn label="Liste" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+        <Btn label="List" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}>
           <List className="h-4 w-4" />
         </Btn>
-        <Btn label="Liste numérotée" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+        <Btn label="Numbered List" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
           <ListOrdered className="h-4 w-4" />
         </Btn>
-        <Btn label="Citation" active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+        <Btn label="Quote" active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
           <Quote className="h-4 w-4" />
         </Btn>
-        <Btn label="Lien" active={editor.isActive("link")} onClick={setLink}>
+        <Btn label="Link" active={editor.isActive("link")} onClick={setLink}>
           <LinkIcon className="h-4 w-4" />
         </Btn>
         <div className="ml-auto flex gap-1">
-          <Btn label="Annuler" onClick={() => editor.chain().focus().undo().run()}>
+          <Btn label="Undo" onClick={() => editor.chain().focus().undo().run()}>
             <Undo2 className="h-4 w-4" />
           </Btn>
-          <Btn label="Rétablir" onClick={() => editor.chain().focus().redo().run()}>
+          <Btn label="Redo" onClick={() => editor.chain().focus().redo().run()}>
             <Redo2 className="h-4 w-4" />
           </Btn>
         </div>

@@ -11,6 +11,6 @@ BEGIN
 END;
 $$;
 
--- Empêcher l'appel direct des deux fonctions
+-- Prevent direct calls to both functions
 REVOKE EXECUTE ON FUNCTION public.touch_updated_at() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.handle_new_user_personnel() FROM PUBLIC, anon, authenticated;

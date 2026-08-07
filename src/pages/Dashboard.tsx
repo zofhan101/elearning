@@ -42,19 +42,19 @@ export default function Dashboard() {
       <section className="gradient-soft border-b border-border">
         <div className="container py-10">
           <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">
-            Tableau de bord
+            Dashboard
           </div>
           <h1 className="text-3xl md:text-4xl font-semibold text-foreground">
-            Mon parcours{firstName ? `, ${firstName}` : ""}
+            My Path{firstName ? `, ${firstName}` : ""}
           </h1>
           <p className="text-muted-foreground mt-2 max-w-2xl">
-            Retrouvez vos formations en cours, vos évaluations à venir et votre progression.
+            Find your ongoing courses, upcoming assessments, and your progress.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-            <StatCard icon={<BookOpen />} label="Formations actives" value={courses.length} />
-            <StatCard icon={<CheckCircle2 />} label="Évaluations terminées" value={completed} />
-            <StatCard icon={<Award />} label="Réussites" value={completed} accent />
+            <StatCard icon={<BookOpen />} label="Active Courses" value={courses.length} />
+            <StatCard icon={<CheckCircle2 />} label="Completed Assessments" value={completed} />
+            <StatCard icon={<Award />} label="Achievements" value={completed} accent />
           </div>
         </div>
       </section>
@@ -62,13 +62,13 @@ export default function Dashboard() {
       <section className="container py-10">
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-semibold">Mes formations</h2>
-            <p className="text-sm text-muted-foreground">Accédez aux modules, contenus et évaluations.</p>
+            <h2 className="text-2xl font-semibold">My Courses</h2>
+            <p className="text-sm text-muted-foreground">Access modules, content, and assessments.</p>
           </div>
           <Button variant="outline" asChild>
             <Link to="/explorer">
               <Compass className="h-4 w-4 mr-2" />
-              Explorer les formations
+              Explore Courses
             </Link>
           </Button>
         </div>
@@ -79,7 +79,7 @@ export default function Dashboard() {
           </div>
         ) : courses.length === 0 ? (
           <div className="surface-card p-12 text-center">
-            <p className="text-muted-foreground">Aucune formation pour le moment.</p>
+            <p className="text-muted-foreground">No courses at this time.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -92,7 +92,7 @@ export default function Dashboard() {
                 <div className="h-24 gradient-hero relative">
                   {c.is_open && (
                     <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wider bg-success text-success-foreground px-2 py-0.5 rounded">
-                      Ouvert
+                      Open
                     </span>
                   )}
                 </div>

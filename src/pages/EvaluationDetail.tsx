@@ -37,7 +37,7 @@ export default function EvaluationDetail() {
   const start = async () => {
     const max = ev.max_attempts ?? 1;
     if (attemptsCount >= max) {
-      toast.error(`Nombre maximum de tentatives atteint (${max}).`);
+      toast.error(`Maximum number of attempts reached (${max}).`);
       return;
     }
     const { data, error } = await supabase
@@ -62,23 +62,23 @@ export default function EvaluationDetail() {
       <div className="border-b border-border bg-card">
         <div className="container py-4">
           <Link to={`/cours/${ev.course_id}/evaluations`} className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-            <ChevronLeft className="h-4 w-4" /> Évaluations
+            <ChevronLeft className="h-4 w-4" /> Assessments
           </Link>
         </div>
       </div>
       <div className="container py-10 max-w-3xl">
         <h1 className="text-3xl font-semibold">{ev.title}</h1>
-        <p className="text-muted-foreground mt-1">En ligne avec l'outil questionnaire</p>
+        <p className="text-muted-foreground mt-1">Online with the questionnaire tool</p>
 
         <div className="flex flex-wrap gap-3 mt-6">
-          <Pill icon={<User className="h-3.5 w-3.5" />}>{ev.mode === "individual" ? "Individuel" : "Groupe"}</Pill>
+          <Pill icon={<User className="h-3.5 w-3.5" />}>{ev.mode === "individual" ? "Individual" : "Group"}</Pill>
           {ev.scheduled_at && (
             <Pill>
-              {new Date(ev.scheduled_at).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} —{" "}
-              {new Date(ev.scheduled_at).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
+              {new Date(ev.scheduled_at).toLocaleDateString("en-US", { day: "numeric", month: "short" })} —{" "}
+              {new Date(ev.scheduled_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
             </Pill>
           )}
-          <Pill icon={<Clock className="h-3.5 w-3.5" />}>Minuterie : {ev.duration_minutes} minutes</Pill>
+          <Pill icon={<Clock className="h-3.5 w-3.5" />}>Timer: {ev.duration_minutes} minutes</Pill>
         </div>
 
         <section className="surface-card p-6 mt-8">
@@ -92,29 +92,29 @@ export default function EvaluationDetail() {
         </section>
 
         <section className="surface-card p-6 mt-4 space-y-3">
-          <h2 className="font-semibold">Déroulement</h2>
-          <Row strong={`${ev.duration_minutes} minutes pour répondre`} sub="Ce questionnaire est minuté." />
+          <h2 className="font-semibold">Schedule</h2>
+          <Row strong={`${ev.duration_minutes} minutes to answer`} sub="This questionnaire is timed." />
           {ev.single_attempt && (
-            <Row strong="Un seul essai" sub="Une fois ce questionnaire soumis, il ne sera plus possible d'y répondre à nouveau." />
+            <Row strong="One attempt only" sub="Once this questionnaire is submitted, it will no longer be possible to answer it again." />
           )}
-          <Row strong={`Tentatives autorisées : ${maxAttempts}`} sub={`Vous avez utilisé ${attemptsCount} tentative${attemptsCount > 1 ? "s" : ""}.`} />
-          <Row strong="Information supplémentaire" sub="Aucun document autorisé." />
+          <Row strong={`Attempts allowed: ${maxAttempts}`} sub={`You have used ${attemptsCount} attempt${attemptsCount > 1 ? "s" : ""}.`} />
+          <Row strong="Additional Information" sub="No documents allowed." />
         </section>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           {blocked ? (
             <div className="flex items-center gap-2 text-sm text-success">
               <CheckCircle2 className="h-5 w-5" />
-              Vous avez déjà soumis ce questionnaire
-              {previousAttempt.score !== null && ` — score : ${previousAttempt.score}/${previousAttempt.max_score}`}
+              You have already submitted this questionnaire
+              {previousAttempt.score !== null && ` — score: ${previousAttempt.score}/${previousAttempt.max_score}`}
             </div>
           ) : (
             <>
               <Button size="lg" onClick={start} className="shadow-elevated">
-                {previousAttempt && !submitted ? "Reprendre le questionnaire" : "Essayer le questionnaire"}
+                {previousAttempt && !submitted ? "Resume Questionnaire" : "Try Questionnaire"}
               </Button>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <AlertCircle className="h-3.5 w-3.5" /> La minuterie démarre dès le début de l'essai.
+                <AlertCircle className="h-3.5 w-3.5" /> The timer starts as soon as the attempt begins.
               </span>
             </>
           )}

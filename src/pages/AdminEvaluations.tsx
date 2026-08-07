@@ -43,7 +43,7 @@ export default function AdminEvaluations() {
   useEffect(() => { if (courseId) load(); }, [courseId]);
 
   const save = async () => {
-    if (!editing.title?.trim()) return toast.error("Titre requis");
+    if (!editing.title?.trim()) return toast.error("Title required");
     const payload: any = {
       title: editing.title,
       description: editing.description || null,
@@ -60,14 +60,14 @@ export default function AdminEvaluations() {
       const { error } = await supabase.from("evaluations").insert(payload);
       if (error) return toast.error(error.message);
     }
-    toast.success("Enregistré");
+    toast.success("Saved");
     setOpen(false);
     setEditing(defaults);
     load();
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer cette évaluation ?")) return;
+    if (!confirm("Delete this assessment?")) return;
     const { error } = await supabase.from("evaluations").delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
@@ -77,24 +77,24 @@ export default function AdminEvaluations() {
     <AppLayout>
       <div className="container py-8 max-w-4xl">
         <Link to="/admin/cours" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2">
-          <ChevronLeft className="h-4 w-4" />Retour aux cours
+          <ChevronLeft className="h-4 w-4" />Back to Courses
         </Link>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Évaluations</h1>
+            <h1 className="text-2xl font-semibold">Assessments</h1>
             <p className="text-muted-foreground text-sm">{course?.title}</p>
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(defaults); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-1" />Nouvelle évaluation</Button>
+              <Button><Plus className="h-4 w-4 mr-1" />New Assessment</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Modifier" : "Nouvelle évaluation"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit" : "New Assessment"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Titre *</Label>
+                  <Label>Title *</Label>
                   <Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
                 </div>
                 <div>
@@ -103,7 +103,7 @@ export default function AdminEvaluations() {
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <Label>Durée (min)</Label>
+                    <Label>Duration (min)</Label>
                     <Input type="number" value={editing.duration_minutes ?? 30} onChange={(e) => setEditing({ ...editing, duration_minutes: parseInt(e.target.value) })} />
                   </div>
                   <div>
@@ -111,36 +111,36 @@ export default function AdminEvaluations() {
                     <Select value={editing.mode} onValueChange={(v: any) => setEditing({ ...editing, mode: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="individual">Individuel</SelectItem>
-                        <SelectItem value="group">Groupe</SelectItem>
+                        <SelectItem value="individual">Individual</SelectItem>
+                        <SelectItem value="group">Group</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Tentative unique</Label>
+                    <Label>Single Attempt</Label>
                     <Select value={editing.single_attempt ? "yes" : "no"} onValueChange={(v) => setEditing({ ...editing, single_attempt: v === "yes" })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="yes">Oui</SelectItem>
-                        <SelectItem value="no">Non</SelectItem>
+                        <SelectItem value="yes">Yes</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div>
-                  <Label>Nombre maximum de tentatives</Label>
+                  <Label>Maximum Number of Attempts</Label>
                   <Input
                     type="number"
                     min={1}
                     value={editing.max_attempts ?? 1}
                     onChange={(e) => setEditing({ ...editing, max_attempts: Math.max(1, parseInt(e.target.value) || 1) })}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Limite stricte appliquée côté serveur — l'étudiant ne peut pas la modifier.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Strict limit enforced server-side — the student cannot modify it.</p>
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                <Button onClick={save}>Enregistrer</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={save}>Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -165,7 +165,7 @@ export default function AdminEvaluations() {
             </div>
           ))}
           {evals.length === 0 && (
-            <div className="surface-card p-8 text-center text-muted-foreground">Aucune évaluation.</div>
+            <div className="surface-card p-8 text-center text-muted-foreground">No assessments.</div>
           )}
         </div>
       </div>

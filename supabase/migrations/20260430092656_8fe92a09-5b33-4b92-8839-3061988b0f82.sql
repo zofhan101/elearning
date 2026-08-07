@@ -3,7 +3,7 @@ DO $$ BEGIN
   CREATE TYPE public.share_audience AS ENUM ('teachers', 'students', 'staff_admin', 'all');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- Helper: appartient à l'audience ?
+-- Helper: belongs to the audience?
 CREATE OR REPLACE FUNCTION public.in_audience(_user_id uuid, _audience share_audience)
 RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
@@ -96,7 +96,7 @@ CREATE POLICY "files_delete_owner_or_admin" ON public.shared_files
   FOR DELETE TO authenticated
   USING (uploaded_by = auth.uid() OR public.has_role(auth.uid(), 'admin'::app_role));
 
--- Bucket privé
+-- Private bucket
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('shared-files', 'shared-files', false)
 ON CONFLICT (id) DO NOTHING;

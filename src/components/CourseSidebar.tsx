@@ -5,21 +5,21 @@ const sections = [
   {
     label: "Menu",
     items: [
-      { to: "renseignements", icon: Info, label: "Renseignements généraux" },
-      { to: "modules", icon: BookOpen, label: "Contenu et activités" },
-      { to: "evaluations", icon: ClipboardCheck, label: "Évaluations" },
+      { to: "renseignements", icon: Info, label: "General Information" },
+      { to: "modules", icon: BookOpen, label: "Content and Activities" },
+      { to: "evaluations", icon: ClipboardCheck, label: "Assessments" },
     ],
   },
   {
-    label: "Groupe",
+    label: "Group",
     items: [
-      { to: "personnes", icon: Users, label: "Personnes inscrites" },
-      { to: "suivi", icon: BarChart3, label: "Suivi et statistiques" },
+      { to: "personnes", icon: Users, label: "Enrolled People" },
+      { to: "suivi", icon: BarChart3, label: "Tracking and Statistics" },
     ],
   },
   {
-    label: "Paramètres",
-    items: [{ to: "autorisations", icon: Shield, label: "Autorisations" }],
+    label: "Settings",
+    items: [{ to: "autorisations", icon: Shield, label: "Permissions" }],
   },
 ];
 
@@ -56,7 +56,7 @@ export function CourseSidebar() {
           </div>
         ))}
         <div className="mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
-          <div className="font-medium text-foreground mb-1">Formation offerte par</div>
+          <div className="font-medium text-foreground mb-1">Training provided by</div>
           Centre Pédagogia
         </div>
       </div>

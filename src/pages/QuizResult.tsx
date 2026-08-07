@@ -43,19 +43,19 @@ export default function QuizResult() {
           <div className="inline-flex h-16 w-16 rounded-full gradient-hero items-center justify-center mb-4 shadow-elevated">
             <Trophy className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-semibold">Questionnaire soumis</h1>
+          <h1 className="text-2xl font-semibold">Questionnaire Submitted</h1>
           <p className="text-muted-foreground mt-1">{ev.title}</p>
           <div className="mt-6 text-5xl font-bold text-primary tabular-nums">
             {attempt.score}
             <span className="text-2xl text-muted-foreground">/{attempt.max_score}</span>
           </div>
-          <div className="text-sm text-muted-foreground mt-1">{pct}% — corrigé ci-dessous</div>
+          <div className="text-sm text-muted-foreground mt-1">{pct}% — answer key below</div>
           <Button asChild variant="outline" className="mt-6">
-            <Link to={`/cours/${ev.course_id}/evaluations`}>Retour aux évaluations</Link>
+            <Link to={`/cours/${ev.course_id}/evaluations`}>Back to Assessments</Link>
           </Button>
         </div>
 
-        <h2 className="text-lg font-semibold mt-10 mb-4">Corrigé détaillé</h2>
+        <h2 className="text-lg font-semibold mt-10 mb-4">Detailed Answer Key</h2>
         <div className="space-y-3">
           {items.map(({ q, answer }, i) => {
             const correct = (answer?.awarded_points ?? 0) > 0;
@@ -71,7 +71,7 @@ export default function QuizResult() {
                         <XCircle className="h-5 w-5 text-destructive" />
                       )
                     ) : (
-                      <div className="h-5 w-5 rounded-full border-2 border-muted-foreground" title="Correction manuelle" />
+                      <div className="h-5 w-5 rounded-full border-2 border-muted-foreground" title="Manual grading" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -79,11 +79,11 @@ export default function QuizResult() {
                       {i + 1}. {q.prompt}
                     </div>
                     <div className="text-sm text-muted-foreground mt-2">
-                      Votre réponse : <span className="text-foreground">{formatAns(q, answer?.response)}</span>
+                      Your answer: <span className="text-foreground">{formatAns(q, answer?.response)}</span>
                     </div>
                     {q.correct && (
                       <div className="text-sm text-success mt-1">
-                        Réponse acceptée : {formatCorrect(q)}
+                        Accepted answer: {formatCorrect(q)}
                       </div>
                     )}
                   </div>

@@ -53,9 +53,9 @@ export default function AdminContents() {
         url: data.publicUrl,
         title: prev.title?.trim() ? prev.title : file.name,
       }));
-      toast.success("Fichier téléversé");
+      toast.success("File uploaded");
     } catch (err: any) {
-      toast.error(err.message ?? "Échec du téléversement");
+      toast.error(err.message ?? "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -72,7 +72,7 @@ export default function AdminContents() {
   useEffect(() => { if (moduleId) load(); }, [moduleId]);
 
   const save = async () => {
-    if (!editing.title?.trim()) return toast.error("Titre requis");
+    if (!editing.title?.trim()) return toast.error("Title required");
     const payload: any = {
       title: editing.title,
       kind: editing.kind,
@@ -90,14 +90,14 @@ export default function AdminContents() {
       const { error } = await supabase.from("content_blocks").insert(payload);
       if (error) return toast.error(error.message);
     }
-    toast.success("Enregistré");
+    toast.success("Saved");
     setOpen(false);
     setEditing({ title: "", kind: "text", body: "" });
     load();
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer ce contenu ?")) return;
+    if (!confirm("Delete this content?")) return;
     const { error } = await supabase.from("content_blocks").delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
@@ -114,25 +114,25 @@ export default function AdminContents() {
     <AppLayout>
       <div className="container py-8 max-w-4xl">
         <Link to={`/admin/cours/${courseId}/modules`} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2">
-          <ChevronLeft className="h-4 w-4" />Retour aux modules
+          <ChevronLeft className="h-4 w-4" />Back to Modules
         </Link>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Contenus</h1>
+            <h1 className="text-2xl font-semibold">Content</h1>
             <p className="text-muted-foreground text-sm">{moduleTitle}</p>
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing({ title: "", kind: "text", body: "" }); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-1" />Nouveau contenu</Button>
+              <Button><Plus className="h-4 w-4 mr-1" />New Content</Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Modifier le contenu" : "Nouveau contenu"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit Content" : "New Content"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Titre *</Label>
+                    <Label>Title *</Label>
                     <Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
                   </div>
                   <div>
@@ -140,27 +140,27 @@ export default function AdminContents() {
                     <Select value={editing.kind} onValueChange={(v: Kind) => setEditing({ ...editing, kind: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="text">Texte enrichi</SelectItem>
-                        <SelectItem value="video">Vidéo (URL)</SelectItem>
-                        <SelectItem value="link">Lien externe</SelectItem>
-                        <SelectItem value="file">Fichier (URL)</SelectItem>
+                        <SelectItem value="text">Rich Text</SelectItem>
+                        <SelectItem value="video">Video (URL)</SelectItem>
+                        <SelectItem value="link">External Link</SelectItem>
+                        <SelectItem value="file">File (URL)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Section (optionnel)</Label>
+                    <Label>Section (optional)</Label>
                     <Input value={editing.section ?? ""} onChange={(e) => setEditing({ ...editing, section: e.target.value })} />
                   </div>
                   <div>
-                    <Label>Cohorte cible (optionnel)</Label>
-                    <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Hérite du module —" />
+                    <Label>Target Cohort (optional)</Label>
+                    <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Inherits from module —" />
                   </div>
                 </div>
                 {editing.kind === "text" ? (
                   <div>
-                    <Label>Contenu</Label>
+                    <Label>Content</Label>
                     <RichTextEditor value={editing.body ?? ""} onChange={(v) => setEditing({ ...editing, body: v })} />
                   </div>
                 ) : (
@@ -187,9 +187,9 @@ export default function AdminContents() {
                             onClick={() => fileInputRef.current?.click()}
                           >
                             {uploading ? (
-                              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Envoi…</>
+                              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Uploading…</>
                             ) : (
-                              <><Upload className="h-4 w-4 mr-2" />Parcourir…</>
+                              <><Upload className="h-4 w-4 mr-2" />Browse…</>
                             )}
                           </Button>
                         </>
@@ -197,15 +197,15 @@ export default function AdminContents() {
                     </div>
                     {editing.kind === "file" && (
                       <p className="text-xs text-muted-foreground">
-                        Choisissez un fichier sur votre ordinateur ou collez une URL existante.
+                        Choose a file from your computer or paste an existing URL.
                       </p>
                     )}
                   </div>
                 )}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                <Button onClick={save}>Enregistrer</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={save}>Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -235,7 +235,7 @@ export default function AdminContents() {
         />
         {blocks.length === 0 && (
           <div className="surface-card p-8 text-center text-muted-foreground mt-3">
-            Aucun contenu. Ajoutez du texte, une vidéo, un lien ou un fichier.
+            No content. Add text, a video, a link, or a file.
           </div>
         )}
       </div>

@@ -27,7 +27,7 @@ export default function Explorer() {
     const { error } = await supabase.from("enrollments").insert({ course_id: id, user_id: user!.id });
     if (error) toast.error(error.message);
     else {
-      toast.success("Inscription confirmée");
+      toast.success("Enrollment confirmed");
       setEnrolled((s) => new Set(s).add(id));
     }
   };
@@ -37,11 +37,11 @@ export default function Explorer() {
   return (
     <AppLayout>
       <div className="container py-10">
-        <h1 className="text-3xl font-semibold mb-2">Explorer les formations</h1>
-        <p className="text-muted-foreground mb-6">Renforcez vos compétences avec nos formations.</p>
+        <h1 className="text-3xl font-semibold mb-2">Explore Courses</h1>
+        <p className="text-muted-foreground mb-6">Strengthen your skills with our courses.</p>
         <div className="relative max-w-md mb-8">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher une formation…" className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search for a course…" className="pl-9" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -56,11 +56,11 @@ export default function Explorer() {
               <div className="flex gap-2 mt-4">
                 {enrolled.has(c.id) ? (
                   <Button asChild className="flex-1">
-                    <Link to={`/cours/${c.id}/modules`}>Accéder</Link>
+                    <Link to={`/cours/${c.id}/modules`}>Access</Link>
                   </Button>
                 ) : (
                   <Button className="flex-1" onClick={() => enroll(c.id)}>
-                    S'inscrire
+                    Enroll
                   </Button>
                 )}
               </div>

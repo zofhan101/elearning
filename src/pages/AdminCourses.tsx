@@ -52,7 +52,7 @@ export default function AdminCourses() {
   useEffect(() => { load(); }, []);
 
   const save = async () => {
-    if (!editing.title?.trim()) return toast.error("Titre requis");
+    if (!editing.title?.trim()) return toast.error("Title required");
     const payload: any = {
       title: editing.title,
       subtitle: editing.subtitle || null,
@@ -67,12 +67,12 @@ export default function AdminCourses() {
     if (editing.id) {
       const { error } = await supabase.from("courses").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
-      toast.success("Cours mis à jour");
+      toast.success("Course updated");
     } else {
       payload.created_by = user?.id;
       const { error } = await supabase.from("courses").insert(payload);
       if (error) return toast.error(error.message);
-      toast.success("Cours créé");
+      toast.success("Course created");
     }
     setOpen(false);
     setEditing(empty);
@@ -80,10 +80,10 @@ export default function AdminCourses() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer ce cours ?")) return;
+    if (!confirm("Delete this course?")) return;
     const { error } = await supabase.from("courses").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Cours supprimé");
+    toast.success("Course deleted");
     load();
   };
 
@@ -92,58 +92,58 @@ export default function AdminCourses() {
       <div className="container py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Gestion des cours</h1>
-            <p className="text-muted-foreground text-sm">Créer, modifier et organiser vos cours.</p>
+            <h1 className="text-2xl font-semibold">Course Management</h1>
+            <p className="text-muted-foreground text-sm">Create, edit, and organize your courses.</p>
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />Nouveau cours</Button>
+              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />New Course</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Modifier le cours" : "Nouveau cours"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit Course" : "New Course"}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <Label>Titre *</Label>
+                  <Label>Title *</Label>
                   <Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
                 </div>
                 <div className="col-span-2">
-                  <Label>Sous-titre</Label>
+                  <Label>Subtitle</Label>
                   <Textarea value={editing.subtitle ?? ""} onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Enseignant</Label>
+                  <Label>Instructor</Label>
                   <Input value={editing.instructor_name ?? ""} onChange={(e) => setEditing({ ...editing, instructor_name: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Groupe / Promotion</Label>
+                  <Label>Group / Cohort</Label>
                   <Input value={editing.group_label ?? ""} onChange={(e) => setEditing({ ...editing, group_label: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Date de début</Label>
+                  <Label>Start Date</Label>
                   <Input type="date" value={editing.start_date ?? ""} onChange={(e) => setEditing({ ...editing, start_date: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Date de fin</Label>
+                  <Label>End Date</Label>
                   <Input type="date" value={editing.end_date ?? ""} onChange={(e) => setEditing({ ...editing, end_date: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Couleur (clé)</Label>
+                  <Label>Color (key)</Label>
                   <Input value={editing.cover_color ?? ""} onChange={(e) => setEditing({ ...editing, cover_color: e.target.value })} placeholder="blue, teal, amber…" />
                 </div>
                 <div className="flex items-end gap-3">
                   <Switch checked={!!editing.is_open} onCheckedChange={(v) => setEditing({ ...editing, is_open: v })} />
-                  <Label>Cours ouvert aux étudiants</Label>
+                  <Label>Course open to students</Label>
                 </div>
                 <div className="col-span-2">
-                  <Label>Cohorte cible</Label>
+                  <Label>Target Cohort</Label>
                   <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                <Button onClick={save}>Enregistrer</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={save}>Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -156,7 +156,7 @@ export default function AdminCourses() {
                 <div className="font-medium">{c.title}</div>
                 {c.subtitle && <div className="text-sm text-muted-foreground">{c.subtitle}</div>}
                 <div className="text-xs text-muted-foreground mt-1">
-                  {c.instructor_name ?? "—"} · {c.group_label ?? "—"} · {c.is_open ? "Ouvert" : "Fermé"}
+                  {c.instructor_name ?? "—"} · {c.group_label ?? "—"} · {c.is_open ? "Open" : "Closed"}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -164,7 +164,7 @@ export default function AdminCourses() {
                   <FolderOpen className="h-4 w-4 mr-1" />Modules
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate(`/admin/cours/${c.id}/evaluations`)}>
-                  <ListChecks className="h-4 w-4 mr-1" />Évaluations
+                  <ListChecks className="h-4 w-4 mr-1" />Assessments
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => { setEditing(c); setOpen(true); }}>
                   <Pencil className="h-4 w-4" />
@@ -176,7 +176,7 @@ export default function AdminCourses() {
             </div>
           ))}
           {courses.length === 0 && (
-            <div className="surface-card p-8 text-center text-muted-foreground">Aucun cours pour l'instant.</div>
+            <div className="surface-card p-8 text-center text-muted-foreground">No courses yet.</div>
           )}
         </div>
       </div>

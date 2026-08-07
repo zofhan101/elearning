@@ -41,7 +41,7 @@ export default function AdminModules() {
   useEffect(() => { if (courseId) load(); }, [courseId]);
 
   const save = async () => {
-    if (!editing.title?.trim()) return toast.error("Titre requis");
+    if (!editing.title?.trim()) return toast.error("Title required");
     const payload: any = {
       title: editing.title,
       description: editing.description || null,
@@ -58,14 +58,14 @@ export default function AdminModules() {
       const { error } = await supabase.from("modules").insert(payload);
       if (error) return toast.error(error.message);
     }
-    toast.success("Enregistré");
+    toast.success("Saved");
     setOpen(false);
     setEditing({ title: "", description: "" });
     load();
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer ce module ?")) return;
+    if (!confirm("Delete this module?")) return;
     const { error } = await supabase.from("modules").delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
@@ -82,7 +82,7 @@ export default function AdminModules() {
     <AppLayout>
       <div className="container py-8 max-w-4xl">
         <Link to="/admin/cours" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2">
-          <ChevronLeft className="h-4 w-4" />Retour aux cours
+          <ChevronLeft className="h-4 w-4" />Back to Courses
         </Link>
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -91,15 +91,15 @@ export default function AdminModules() {
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing({ title: "", description: "" }); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-1" />Nouveau module</Button>
+              <Button><Plus className="h-4 w-4 mr-1" />New Module</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Modifier le module" : "Nouveau module"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit Module" : "New Module"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Titre *</Label>
+                  <Label>Title *</Label>
                   <Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
                 </div>
                 <div>
@@ -108,22 +108,22 @@ export default function AdminModules() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Date de début</Label>
+                    <Label>Start Date</Label>
                     <Input type="date" value={editing.start_date ?? ""} onChange={(e) => setEditing({ ...editing, start_date: e.target.value })} />
                   </div>
                   <div>
-                    <Label>Date de fin</Label>
+                    <Label>End Date</Label>
                     <Input type="date" value={editing.end_date ?? ""} onChange={(e) => setEditing({ ...editing, end_date: e.target.value })} />
                   </div>
                 </div>
                 <div>
-                  <Label>Cohorte cible (optionnel)</Label>
-                  <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Hérite du cours —" />
+                  <Label>Target Cohort (optional)</Label>
+                  <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Inherits from course —" />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                <Button onClick={save}>Enregistrer</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={save}>Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -136,10 +136,10 @@ export default function AdminModules() {
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="font-medium truncate">{m.title}</div>
-                {m.start_date && <div className="text-xs text-muted-foreground">Début : {m.start_date}</div>}
+                {m.start_date && <div className="text-xs text-muted-foreground">Start: {m.start_date}</div>}
               </div>
               <Button variant="outline" size="sm" onClick={() => navigate(`/admin/cours/${courseId}/modules/${m.id}/contenus`)}>
-                <FileText className="h-4 w-4 mr-1" />Contenus
+                <FileText className="h-4 w-4 mr-1" />Content
               </Button>
               <Button variant="outline" size="sm" onClick={() => { setEditing(m); setOpen(true); }}>
                 <Pencil className="h-4 w-4" />
@@ -152,7 +152,7 @@ export default function AdminModules() {
         />
         {modules.length === 0 && (
           <div className="surface-card p-8 text-center text-muted-foreground mt-3">
-            Aucun module. Glissez-déposez pour réordonner après création.
+            No modules. Drag and drop to reorder after creation.
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
--- Helper: peut écrire (créer dossier, déposer, supprimer) dans une audience donnée
+-- Helper: can write (create folder, upload, delete) in a given audience
 CREATE OR REPLACE FUNCTION public.can_write_audience(_user_id uuid, _audience share_audience)
 RETURNS boolean
 LANGUAGE sql

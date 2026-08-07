@@ -53,7 +53,7 @@ export default function AdminCohorts() {
   useEffect(() => { load(); }, []);
 
   const save = async () => {
-    if (!editing.name?.trim()) return toast.error("Nom requis");
+    if (!editing.name?.trim()) return toast.error("Name required");
     const payload: any = {
       name: editing.name,
       description: editing.description || null,
@@ -69,12 +69,12 @@ export default function AdminCohorts() {
       const { error } = await supabase.from("cohorts").insert(payload);
       if (error) return toast.error(error.message);
     }
-    toast.success("Enregistré");
+    toast.success("Saved");
     setOpen(false); setEditing(empty); load();
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Supprimer cette cohorte ?")) return;
+    if (!confirm("Delete this cohort?")) return;
     const { error } = await supabase.from("cohorts").delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
@@ -130,7 +130,7 @@ export default function AdminCohorts() {
     if (!membersFor) return;
     const text = await file.text();
     const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    if (lines.length === 0) return toast.error("Fichier vide");
+    if (lines.length === 0) return toast.error("Empty file");
     // Detect header
     const header = lines[0].toLowerCase();
     const hasHeader = /email|matricule/.test(header);
@@ -150,17 +150,17 @@ export default function AdminCohorts() {
       const { data } = await supabase.from("personnel").select("id, matricule").in("matricule", matricules);
       (data ?? []).forEach((p: any) => userIds.add(p.id));
     }
-    if (userIds.size === 0) return toast.error("Aucun étudiant correspondant trouvé");
+    if (userIds.size === 0) return toast.error("No matching student found");
 
     const ids = Array.from(userIds);
     const { data: existing } = await supabase
       .from("cohort_members").select("user_id").eq("cohort_id", membersFor.id).in("user_id", ids);
     const existingSet = new Set((existing ?? []).map((m: any) => m.user_id));
     const toInsert = ids.filter((id) => !existingSet.has(id)).map((user_id) => ({ cohort_id: membersFor.id, user_id }));
-    if (toInsert.length === 0) { toast.info("Tous les membres trouvés sont déjà présents"); return; }
+    if (toInsert.length === 0) { toast.info("All matching members are already present"); return; }
     const { error } = await supabase.from("cohort_members").insert(toInsert);
     if (error) return toast.error(error.message);
-    toast.success(`${toInsert.length} membre(s) ajouté(s) sur ${rows.length} ligne(s) (${ids.length} trouvés)`);
+    toast.success(`${toInsert.length} member(s) added out of ${rows.length} row(s) (${ids.length} found)`);
     loadMembers(membersFor);
   };
 
@@ -169,20 +169,20 @@ export default function AdminCohorts() {
       <div className="container py-8 max-w-4xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Cohortes</h1>
-            <p className="text-muted-foreground text-sm">Regroupez les étudiants par mention, parcours, niveau ou liste manuelle.</p>
+            <h1 className="text-2xl font-semibold">Cohorts</h1>
+            <p className="text-muted-foreground text-sm">Group students by program, track, level, or a manual list.</p>
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />Nouvelle cohorte</Button>
+              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />New Cohort</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Modifier la cohorte" : "Nouvelle cohorte"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit Cohort" : "New Cohort"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Nom *</Label>
+                  <Label>Name *</Label>
                   <Input value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
                 </div>
                 <div>
@@ -191,43 +191,43 @@ export default function AdminCohorts() {
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <Label>Mention</Label>
+                    <Label>Program</Label>
                     <Select value={editing.mention ?? ANY} onValueChange={(v) => setEditing({ ...editing, mention: v === ANY ? null : v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={ANY}>— Toutes —</SelectItem>
+                        <SelectItem value={ANY}>— All —</SelectItem>
                         {MENTIONS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Parcours</Label>
+                    <Label>Track</Label>
                     <Select value={editing.parcours ?? ANY} onValueChange={(v) => setEditing({ ...editing, parcours: v === ANY ? null : v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={ANY}>— Tous —</SelectItem>
+                        <SelectItem value={ANY}>— All —</SelectItem>
                         {PARCOURS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Niveau</Label>
+                    <Label>Level</Label>
                     <Select value={editing.niveau ?? ANY} onValueChange={(v) => setEditing({ ...editing, niveau: v === ANY ? null : v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={ANY}>— Tous —</SelectItem>
+                        <SelectItem value={ANY}>— All —</SelectItem>
                         {NIVEAUX.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Laissez vide les filtres pour utiliser uniquement la liste manuelle. Sinon les étudiants correspondants seront inclus automatiquement.
+                  Leave the filters empty to use only the manual list. Otherwise, matching students will be included automatically.
                 </p>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                <Button onClick={save}>Enregistrer</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={save}>Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -240,12 +240,12 @@ export default function AdminCohorts() {
                 <div className="font-medium">{c.name}</div>
                 {c.description && <div className="text-sm text-muted-foreground">{c.description}</div>}
                 <div className="text-xs text-muted-foreground mt-1">
-                  {[c.mention, c.parcours, c.niveau].filter(Boolean).join(" · ") || "Liste manuelle uniquement"}
+                  {[c.mention, c.parcours, c.niveau].filter(Boolean).join(" · ") || "Manual list only"}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => loadMembers(c)}>
-                  <Users className="h-4 w-4 mr-1" />Membres
+                  <Users className="h-4 w-4 mr-1" />Members
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => { setEditing(c); setOpen(true); }}>
                   <Pencil className="h-4 w-4" />
@@ -257,31 +257,31 @@ export default function AdminCohorts() {
             </div>
           ))}
           {cohorts.length === 0 && (
-            <div className="surface-card p-8 text-center text-muted-foreground">Aucune cohorte.</div>
+            <div className="surface-card p-8 text-center text-muted-foreground">No cohorts.</div>
           )}
         </div>
 
         <Dialog open={!!membersFor} onOpenChange={(o) => { if (!o) { setMembersFor(null); setMembers([]); setSearch(""); setResults([]); } }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Membres — {membersFor?.name}</DialogTitle>
+              <DialogTitle>Members — {membersFor?.name}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="flex gap-2">
-                <Input placeholder="Rechercher un étudiant (nom ou email)" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSearch()} />
-                <Button variant="outline" onClick={doSearch}>Rechercher</Button>
+                <Input placeholder="Search for a student (name or email)" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && doSearch()} />
+                <Button variant="outline" onClick={doSearch}>Search</Button>
                 <Button variant="outline" asChild>
                   <label className="cursor-pointer">
-                    <Upload className="h-4 w-4 mr-1" />Importer CSV
+                    <Upload className="h-4 w-4 mr-1" />Import CSV
                     <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.target.value = ""; }} />
                   </label>
                 </Button>
                 <Button variant="outline" onClick={openPicker}>
-                  <UserPlus className="h-4 w-4 mr-1" />Ajouter manuellement
+                  <UserPlus className="h-4 w-4 mr-1" />Add Manually
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">
-                Format CSV attendu : une colonne <code>email</code> (recommandé) et/ou <code>matricule</code>, séparées par <code>,</code> <code>;</code> ou tabulation. Exemple : <code>email,matricule</code> puis <code>jean.dupont@univ.mg,MAT001</code>. Sans en-tête, la première colonne est traitée comme email.
+                Expected CSV format: an <code>email</code> column (recommended) and/or <code>matricule</code>, separated by <code>,</code> <code>;</code> or tab. Example: <code>email,matricule</code> then <code>jean.dupont@univ.mg,MAT001</code>. Without a header, the first column is treated as email.
               </p>
 
               {results.length > 0 && (
@@ -292,13 +292,13 @@ export default function AdminCohorts() {
                         <div className="font-medium">{r.full_name ?? r.email}</div>
                         <div className="text-xs text-muted-foreground">{r.email}</div>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => addMember(r.user_id)}>Ajouter</Button>
+                      <Button size="sm" variant="outline" onClick={() => addMember(r.user_id)}>Add</Button>
                     </div>
                   ))}
                 </div>
               )}
               <div>
-                <div className="text-sm font-medium mb-2">Membres manuels ({members.length})</div>
+                <div className="text-sm font-medium mb-2">Manual Members ({members.length})</div>
                 <div className="space-y-1">
                   {members.map((m) => (
                     <div key={m.id} className="flex items-center justify-between px-3 py-2 surface-card">
@@ -309,7 +309,7 @@ export default function AdminCohorts() {
                       <Button size="icon" variant="ghost" onClick={() => removeMember(m.id)}><X className="h-4 w-4" /></Button>
                     </div>
                   ))}
-                  {members.length === 0 && <div className="text-sm text-muted-foreground">Aucun membre manuel.</div>}
+                  {members.length === 0 && <div className="text-sm text-muted-foreground">No manual members.</div>}
                 </div>
               </div>
             </div>
@@ -319,14 +319,14 @@ export default function AdminCohorts() {
         <Dialog open={pickerOpen} onOpenChange={(o) => { setPickerOpen(o); if (!o) { setPersonnelSearch(""); setQuickNom(""); setQuickPrenom(""); } }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Ajouter un membre — {membersFor?.name}</DialogTitle>
+              <DialogTitle>Add a Member — {membersFor?.name}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="surface-card p-3 space-y-2">
-                <div className="text-sm font-medium">Créer et ajouter un nouveau membre</div>
+                <div className="text-sm font-medium">Create and Add a New Member</div>
                 <div className="flex flex-wrap gap-2">
-                  <Input className="flex-1 min-w-[140px]" placeholder="Nom *" value={quickNom} onChange={(e) => setQuickNom(e.target.value)} />
-                  <Input className="flex-1 min-w-[140px]" placeholder="Prénom" value={quickPrenom} onChange={(e) => setQuickPrenom(e.target.value)} />
+                  <Input className="flex-1 min-w-[140px]" placeholder="Last Name *" value={quickNom} onChange={(e) => setQuickNom(e.target.value)} />
+                  <Input className="flex-1 min-w-[140px]" placeholder="First Name" value={quickPrenom} onChange={(e) => setQuickPrenom(e.target.value)} />
                   <Button
                     disabled={creating || !quickNom.trim() || !membersFor}
                     onClick={async () => {
@@ -337,27 +337,27 @@ export default function AdminCohorts() {
                         .insert({ nom: quickNom.trim(), prenom: quickPrenom.trim() || null } as any)
                         .select("id")
                         .single();
-                      if (error || !data) { setCreating(false); return toast.error(error?.message ?? "Erreur"); }
+                      if (error || !data) { setCreating(false); return toast.error(error?.message ?? "Error"); }
                       const { error: e2 } = await supabase
                         .from("cohort_members")
                         .insert({ cohort_id: membersFor.id, user_id: data.id });
                       setCreating(false);
                       if (e2) return toast.error(e2.message);
-                      toast.success("Membre créé et ajouté");
+                      toast.success("Member created and added");
                       setQuickNom(""); setQuickPrenom("");
                       await openPicker();
                       loadMembers(membersFor);
                     }}
                   >
-                    <Plus className="h-4 w-4 mr-1" />Ajouter
+                    <Plus className="h-4 w-4 mr-1" />Add
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Pour renseigner plus de champs (date naissance, mention, parcours…), utilisez Administration → Membres.</p>
+                <p className="text-xs text-muted-foreground">To fill in more fields (date of birth, program, track…), use Administration → Members.</p>
               </div>
 
               <div>
-                <div className="text-sm font-medium mb-2">Choisir un membre existant</div>
-                <Input placeholder="Filtrer par nom, prénom, mention…" value={personnelSearch} onChange={(e) => setPersonnelSearch(e.target.value)} />
+                <div className="text-sm font-medium mb-2">Choose an Existing Member</div>
+                <Input placeholder="Filter by last name, first name, program…" value={personnelSearch} onChange={(e) => setPersonnelSearch(e.target.value)} />
               </div>
               <div className="max-h-[360px] overflow-y-auto space-y-1">
                 {personnelList
@@ -377,13 +377,13 @@ export default function AdminCohorts() {
                           </div>
                         </div>
                         <Button size="sm" variant="outline" disabled={already} onClick={async () => { await addMember(p.id); }}>
-                          {already ? "Déjà membre" : "Ajouter"}
+                          {already ? "Already a member" : "Add"}
                         </Button>
                       </div>
                     );
                   })}
                 {personnelList.length === 0 && (
-                  <div className="text-sm text-muted-foreground text-center py-6">Aucun membre existant. Utilisez le formulaire ci-dessus pour en créer un.</div>
+                  <div className="text-sm text-muted-foreground text-center py-6">No existing members. Use the form above to create one.</div>
                 )}
               </div>
             </div>
