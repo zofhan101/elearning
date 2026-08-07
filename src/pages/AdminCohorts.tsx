@@ -142,41 +142,97 @@ export default function AdminCohorts() {
     if (membersFor) loadMembers(membersFor);
   };
 
+  const parseCsv = (text: string): Record<string, string>[] => {
+    const lines = text.replace(/\r/g, "").split("\n").filter((l) => l.trim().length);
+    if (!lines.length) return [];
+    const split = (line: string) => {
+      const out: string[] = []; let cur = ""; let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (inQ) {
+          if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+          else if (c === '"') inQ = false;
+          else cur += c;
+        } else {
+          if (c === '"') inQ = true;
+          else if (c === "," || c === ";" || c === "\t") { out.push(cur); cur = ""; }
+          else cur += c;
+        }
+      }
+      out.push(cur);
+      return out;
+    };
+    const headers = split(lines[0]).map((h) => h.trim().toLowerCase());
+    return lines.slice(1).map((l) => {
+      const cells = split(l);
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => (obj[h] = (cells[i] ?? "").trim()));
+      return obj;
+    });
+  };
+
+  const HEADER_ALIASES: Record<string, string> = {
+    nom: "nom", "last name": "nom", lastname: "nom",
+    prenom: "prenom", "first name": "prenom", firstname: "prenom",
+    date_naissance: "date_naissance", "date of birth": "date_naissance", dob: "date_naissance",
+    sexe: "sexe", gender: "sexe",
+    adresse: "adresse", address: "adresse",
+    mention: "mention", program: "mention", programme: "mention",
+    parcours: "parcours", country: "parcours",
+    member_role: "member_role", role: "member_role",
+  };
+
+  const resolveOption = (list: { v: string; l: string }[], raw: string): string | null => {
+    const q = raw.trim().toLowerCase();
+    if (!q) return null;
+    const byValue = list.find((o) => o.v.toLowerCase() === q);
+    if (byValue) return byValue.v;
+    const byLabel = list.find((o) => o.l.toLowerCase() === q);
+    return byLabel ? byLabel.v : null;
+  };
+
   const importCsv = async (file: File) => {
     if (!membersFor) return;
     const text = await file.text();
-    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    if (lines.length === 0) return toast.error("Empty file");
-    // Detect header
-    const header = lines[0].toLowerCase();
-    const hasHeader = /email|matricule/.test(header);
-    const rows = (hasHeader ? lines.slice(1) : lines).map((l) => l.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "")));
-    const cols = hasHeader ? header.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "")) : ["email"];
-    const emailIdx = cols.indexOf("email");
-    const matIdx = cols.indexOf("matricule");
-    const emails = rows.map((r) => (emailIdx >= 0 ? r[emailIdx] : r[0])).filter(Boolean).map((e) => e.toLowerCase());
-    const matricules = matIdx >= 0 ? rows.map((r) => r[matIdx]).filter(Boolean) : [];
+    const rows = parseCsv(text);
+    if (!rows.length) return toast.error("Empty file");
 
-    const userIds = new Set<string>();
-    if (emails.length) {
-      const { data } = await supabase.from("profiles").select("id, email").in("email", emails);
-      (data ?? []).forEach((p: any) => userIds.add(p.id));
+    const toInsert: any[] = [];
+    let skipped = 0;
+    for (const r of rows) {
+      const mapped: Record<string, string> = {};
+      for (const key of Object.keys(r)) {
+        const canon = HEADER_ALIASES[key];
+        if (canon) mapped[canon] = r[key];
+      }
+      if (!mapped.nom?.trim() || !mapped.member_role?.trim()) { skipped++; continue; }
+      const role = resolveOption(ROLES, mapped.member_role);
+      if (!role) { skipped++; continue; }
+      const sexeRaw = mapped.sexe?.trim().toUpperCase();
+      toInsert.push({
+        nom: mapped.nom.trim(),
+        prenom: mapped.prenom?.trim() || null,
+        date_naissance: mapped.date_naissance?.trim() || null,
+        sexe: sexeRaw === "M" || sexeRaw === "F" ? sexeRaw : null,
+        adresse: mapped.adresse?.trim() || null,
+        mention: resolveOption(MENTIONS, mapped.mention ?? ""),
+        parcours: resolveOption(PARCOURS, mapped.parcours ?? ""),
+        member_role: role,
+      });
     }
-    if (matricules.length) {
-      const { data } = await supabase.from("personnel").select("id, matricule").in("matricule", matricules);
-      (data ?? []).forEach((p: any) => userIds.add(p.id));
-    }
-    if (userIds.size === 0) return toast.error("No matching student found");
 
-    const ids = Array.from(userIds);
-    const { data: existing } = await supabase
-      .from("cohort_members").select("user_id").eq("cohort_id", membersFor.id).in("user_id", ids);
-    const existingSet = new Set((existing ?? []).map((m: any) => m.user_id));
-    const toInsert = ids.filter((id) => !existingSet.has(id)).map((user_id) => ({ cohort_id: membersFor.id, user_id }));
-    if (toInsert.length === 0) { toast.info("All matching members are already present"); return; }
-    const { error } = await supabase.from("cohort_members").insert(toInsert);
+    if (toInsert.length === 0) {
+      return toast.error("No valid rows found (Last Name and Role are required for each row)");
+    }
+
+    const { data, error } = await supabase.from("personnel").insert(toInsert).select("id");
     if (error) return toast.error(error.message);
-    toast.success(`${toInsert.length} member(s) added out of ${rows.length} row(s) (${ids.length} found)`);
+
+    const cohortLinks = (data ?? []).map((p: any) => ({ cohort_id: membersFor.id, user_id: p.id }));
+    const { error: e2 } = await supabase.from("cohort_members").insert(cohortLinks);
+    if (e2) return toast.error(e2.message);
+
+    toast.success(`${cohortLinks.length} member(s) created and added${skipped > 0 ? ` (${skipped} row(s) skipped)` : ""}`);
     loadMembers(membersFor);
   };
 
@@ -287,7 +343,7 @@ export default function AdminCohorts() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">
-                Expected CSV format: an <code>email</code> column (recommended) and/or <code>matricule</code>, separated by <code>,</code> <code>;</code> or tab. Example: <code>email,matricule</code> then <code>jean.dupont@univ.mg,MAT001</code>. Without a header, the first column is treated as email.
+                Expected CSV columns: <code>nom</code> (Last Name, required), <code>prenom</code>, <code>date_naissance</code>, <code>sexe</code> (M/F), <code>adresse</code>, <code>mention</code> (Program), <code>parcours</code> (Country), <code>member_role</code> (Role, required — values: enseignant/Instructor, pat/PAT, etudiant/Student). Program and Country accept either the internal value or the display label. Each row creates a new member and adds them to this cohort.
               </p>
 
               {results.length > 0 && (
