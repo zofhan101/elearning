@@ -97,66 +97,62 @@ export default function CourseModules() {
                   {items.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">No content for this module.</p>
                   ) : (
-                    Object.entries(groupBy(items, "section")).map(([section, list]) => (
-                      <div key={section}>
-                        <div className="text-[10px] uppercase tracking-wider font-semibold text-primary mb-2">
-                          {section || "Content"}
-                        </div>
-                        <div className="space-y-2">
-                          {(list as any[]).map((b) => {
-                            const Icon = KIND_ICON[b.kind] ?? iconForUrl(b.url);
-                            const isVideo = b.kind === "video" || /\.(mp4|webm|mov|m4v)(\?|$)/i.test(b.url ?? "");
-                            const isImage = b.kind === "image" || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(b.url ?? "");
-                            const isPdf = /\.pdf(\?|$)/i.test(b.url ?? "");
-                            const content = (
-                              <div className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
-                                <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
-                                  <Icon className="h-4 w-4" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm flex items-center gap-2">
-                                    <span className="truncate">{b.title}</span>
-                                    {b.url && <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
-                                  </div>
-                                  {b.body && <p className="text-sm text-muted-foreground mt-0.5">{b.body}</p>}
-                                  {b.meta && <div className="text-xs text-muted-foreground mt-1">{b.meta}</div>}
-                                  {b.url && (isVideo || isImage || isPdf) && (
-                                    <div className="mt-3">
-                                      {isVideo && (
-                                        <video src={b.url} controls className="w-full max-h-[480px] rounded-md bg-black" />
-                                      )}
-                                      {isImage && (
-                                        <img src={b.url} alt={b.title} className="w-full max-h-[480px] rounded-md object-contain bg-muted" />
-                                      )}
-                                      {isPdf && (
-                                        <iframe src={b.url} title={b.title} className="w-full h-[600px] rounded-md border border-border bg-card" />
-                                      )}
-                                    </div>
-                                  )}
-                                  {b.url && (
-                                    <div className="mt-2 flex gap-2">
-                                      <a href={b.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                        <Link2 className="h-3 w-3" /> Open
-                                      </a>
-                                      <a href={b.url} download className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                        <Download className="h-3 w-3" /> Download
-                                      </a>
-                                    </div>
-                                  )}
-                                </div>
+                    <div className="space-y-2">
+                      {items.map((b) => {
+                        const Icon = KIND_ICON[b.kind] ?? iconForUrl(b.url);
+                        const isVideo = b.kind === "video" || /\.(mp4|webm|mov|m4v)(\?|$)/i.test(b.url ?? "");
+                        const isImage = b.kind === "image" || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(b.url ?? "");
+                        const isPdf = /\.pdf(\?|$)/i.test(b.url ?? "");
+                        const content = (
+                          <div className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
+                            <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm flex items-center gap-2">
+                                <span className="truncate">{b.title}</span>
+                                {b.url && <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                               </div>
-                            );
-                            return b.url && !(isVideo || isImage || isPdf) ? (
-                              <a key={b.id} href={b.url} target="_blank" rel="noopener noreferrer" className="block">
-                                {content}
-                              </a>
-                            ) : (
-                              <div key={b.id}>{content}</div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))
+                              {b.section && (
+                                <div className="text-xs text-muted-foreground mt-0.5">Lecturer: {b.section}</div>
+                              )}
+                              {b.body && <p className="text-sm text-muted-foreground mt-0.5">{b.body}</p>}
+                              {b.meta && <div className="text-xs text-muted-foreground mt-1">{b.meta}</div>}
+                              {b.url && (isVideo || isImage || isPdf) && (
+                                <div className="mt-3">
+                                  {isVideo && (
+                                    <video src={b.url} controls className="w-full max-h-[480px] rounded-md bg-black" />
+                                  )}
+                                  {isImage && (
+                                    <img src={b.url} alt={b.title} className="w-full max-h-[480px] rounded-md object-contain bg-muted" />
+                                  )}
+                                  {isPdf && (
+                                    <iframe src={b.url} title={b.title} className="w-full h-[600px] rounded-md border border-border bg-card" />
+                                  )}
+                                </div>
+                              )}
+                              {b.url && (
+                                <div className="mt-2 flex gap-2">
+                                  <a href={b.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                    <Link2 className="h-3 w-3" /> Open
+                                  </a>
+                                  <a href={b.url} download className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                    <Download className="h-3 w-3" /> Download
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                        return b.url && !(isVideo || isImage || isPdf) ? (
+                          <a key={b.id} href={b.url} target="_blank" rel="noopener noreferrer" className="block">
+                            {content}
+                          </a>
+                        ) : (
+                          <div key={b.id}>{content}</div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               )}
@@ -166,12 +162,4 @@ export default function CourseModules() {
       </div>
     </div>
   );
-}
-
-function groupBy<T extends Record<string, any>>(arr: T[], key: keyof T) {
-  return arr.reduce<Record<string, T[]>>((acc, item) => {
-    const k = String(item[key] ?? "Content");
-    (acc[k] ||= []).push(item);
-    return acc;
-  }, {});
 }

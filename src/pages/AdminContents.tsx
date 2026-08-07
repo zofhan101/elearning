@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { SortableList } from "@/components/SortableList";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { SafeHtml } from "@/components/SafeHtml";
-import { CohortSelect } from "@/components/CohortSelect";
 import { toast } from "sonner";
 
 type Kind = "text" | "video" | "link" | "file";
@@ -25,7 +24,8 @@ interface Block {
   url: string | null;
   section: string | null;
   position: number;
-  cohort_id: string | null;
+  start_date: string | null;
+  end_date: string | null;
 }
 
 export default function AdminContents() {
@@ -79,7 +79,8 @@ export default function AdminContents() {
       body: editing.body || null,
       url: editing.url || null,
       section: editing.section || null,
-      cohort_id: editing.cohort_id ?? null,
+      start_date: editing.start_date || null,
+      end_date: editing.end_date || null,
     };
     if (editing.id) {
       const { error } = await supabase.from("content_blocks").update(payload).eq("id", editing.id);
@@ -148,14 +149,18 @@ export default function AdminContents() {
                     </Select>
                   </div>
                 </div>
+                <div>
+                  <Label>Lecturer (optional)</Label>
+                  <Input value={editing.section ?? ""} onChange={(e) => setEditing({ ...editing, section: e.target.value })} />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Section (optional)</Label>
-                    <Input value={editing.section ?? ""} onChange={(e) => setEditing({ ...editing, section: e.target.value })} />
+                    <Label>Start Date (optional)</Label>
+                    <Input type="date" value={editing.start_date ?? ""} onChange={(e) => setEditing({ ...editing, start_date: e.target.value })} />
                   </div>
                   <div>
-                    <Label>Target Cohort (optional)</Label>
-                    <CohortSelect value={editing.cohort_id} onChange={(v) => setEditing({ ...editing, cohort_id: v })} placeholder="— Inherits from module —" />
+                    <Label>End Date (optional)</Label>
+                    <Input type="date" value={editing.end_date ?? ""} onChange={(e) => setEditing({ ...editing, end_date: e.target.value })} />
                   </div>
                 </div>
                 {editing.kind === "text" ? (
@@ -219,6 +224,13 @@ export default function AdminContents() {
               <div className="flex-1 min-w-0">
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">{b.kind}</div>
                 <div className="font-medium">{b.title}</div>
+                {(b.section || b.start_date) && (
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {b.section && <>Lecturer: {b.section}</>}
+                    {b.section && b.start_date && " · "}
+                    {b.start_date && <>{b.start_date}{b.end_date ? ` – ${b.end_date}` : ""}</>}
+                  </div>
+                )}
                 {b.kind === "text" && b.body && (
                   <div className="mt-1 text-sm"><SafeHtml html={b.body} /></div>
                 )}
