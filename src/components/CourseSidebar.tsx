@@ -57,7 +57,7 @@ export function CourseSidebar() {
         ))}
         <div className="mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
           <div className="font-medium text-foreground mb-1">Training provided by</div>
-          Centre Pédagogia
+          SDG Project
         </div>
       </div>
     </aside>
