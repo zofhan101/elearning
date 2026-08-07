@@ -189,7 +189,7 @@ export default function AdminCourses() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => navigate(`/admin/cours/${c.id}/modules`)}>
-                  <FolderOpen className="h-4 w-4 mr-1" />Modules
+                  <FolderOpen className="h-4 w-4 mr-1" />Courses
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate(`/admin/cours/${c.id}/evaluations`)}>
                   <ListChecks className="h-4 w-4 mr-1" />Assessments

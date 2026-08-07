@@ -14,6 +14,7 @@ import { toast } from "sonner";
 interface Module {
   id: string;
   title: string;
+  lecturer: string;
   description: string | null;
   position: number;
   start_date: string | null;
@@ -26,7 +27,7 @@ export default function AdminModules() {
   const [modules, setModules] = useState<Module[]>([]);
   const [course, setCourse] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<Module>>({ title: "", description: "" });
+  const [editing, setEditing] = useState<Partial<Module>>({ title: "", lecturer: "", description: "" });
 
   const load = async () => {
     const [{ data: c }, { data: m }] = await Promise.all([
@@ -40,8 +41,10 @@ export default function AdminModules() {
 
   const save = async () => {
     if (!editing.title?.trim()) return toast.error("Title required");
+    if (!editing.lecturer?.trim()) return toast.error("Lecturer required");
     const payload: any = {
       title: editing.title,
+      lecturer: editing.lecturer,
       description: editing.description || null,
       start_date: editing.start_date || null,
       end_date: editing.end_date || null,
@@ -57,7 +60,7 @@ export default function AdminModules() {
     }
     toast.success("Saved");
     setOpen(false);
-    setEditing({ title: "", description: "" });
+    setEditing({ title: "", lecturer: "", description: "" });
     load();
   };
 
@@ -86,7 +89,7 @@ export default function AdminModules() {
             <h1 className="text-2xl font-semibold">Modules</h1>
             <p className="text-muted-foreground text-sm">{course?.title}</p>
           </div>
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing({ title: "", description: "" }); }}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing({ title: "", lecturer: "", description: "" }); }}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1" />New Course</Button>
             </DialogTrigger>
@@ -98,6 +101,10 @@ export default function AdminModules() {
                 <div>
                   <Label>Title *</Label>
                   <Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Lecturer *</Label>
+                  <Input value={editing.lecturer ?? ""} onChange={(e) => setEditing({ ...editing, lecturer: e.target.value })} />
                 </div>
                 <div>
                   <Label>Description</Label>
@@ -129,7 +136,10 @@ export default function AdminModules() {
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="font-medium truncate">{m.title}</div>
-                {m.start_date && <div className="text-xs text-muted-foreground">Start: {m.start_date}</div>}
+                <div className="text-xs text-muted-foreground">
+                  {m.lecturer}
+                  {m.start_date && <> · Start: {m.start_date}</>}
+                </div>
               </div>
               <Button variant="outline" size="sm" onClick={() => navigate(`/admin/cours/${courseId}/modules/${m.id}/contenus`)}>
                 <FileText className="h-4 w-4 mr-1" />Content
