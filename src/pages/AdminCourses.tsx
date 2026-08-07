@@ -125,11 +125,11 @@ export default function AdminCourses() {
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />New Course</Button>
+              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />New Module</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Edit Course" : "New Course"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit Module" : "New Module"}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
@@ -139,14 +139,6 @@ export default function AdminCourses() {
                 <div className="col-span-2">
                   <Label>Subtitle</Label>
                   <Textarea value={editing.subtitle ?? ""} onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Instructor</Label>
-                  <Input value={editing.instructor_name ?? ""} onChange={(e) => setEditing({ ...editing, instructor_name: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Group / Cohort</Label>
-                  <Input value={editing.group_label ?? ""} onChange={(e) => setEditing({ ...editing, group_label: e.target.value })} />
                 </div>
                 <div>
                   <Label>Start Date</Label>

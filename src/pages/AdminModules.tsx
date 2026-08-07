@@ -88,11 +88,11 @@ export default function AdminModules() {
           </div>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing({ title: "", description: "" }); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-1" />New Module</Button>
+              <Button><Plus className="h-4 w-4 mr-1" />New Course</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Edit Module" : "New Module"}</DialogTitle>
+                <DialogTitle>{editing.id ? "Edit Course" : "New Course"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
