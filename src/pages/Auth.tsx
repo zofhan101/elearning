@@ -52,7 +52,7 @@ export default function AuthPage() {
         <div className="text-center mb-8">
           <img src={logoFmm} alt="Faculty of Medicine Antananarivo" className="h-20 w-20 mx-auto mb-4 object-contain" />
           
-          <h1 className="text-3xl font-semibold text-foreground">Faculty of Medicine Antananarivo</h1>
+          <h1 className="text-3xl font-semibold text-foreground">Healthy Paths Project</h1>
           <p className="text-muted-foreground mt-1">Your learning space</p>
         </div>
 
@@ -65,12 +65,12 @@ export default function AuthPage() {
                 type="email"
                 value={signin.email}
                 onChange={(e) => setSignin({ ...signin, email: e.target.value })}
-                placeholder="you@univ-antananarivo.mg"
+                placeholder="your email address"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Your Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -86,7 +86,7 @@ export default function AuthPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Faculty of Medicine Antananarivo — Learning space.
+          LARTIC Laboratory | Faculty of Medicine Antananarivo — Learning space.
         </p>
       </div>
     </div>
