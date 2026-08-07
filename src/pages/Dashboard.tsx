@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import logoFmm from "@/assets/logo-fmm.png";
 
 interface Course {
   id: string;
@@ -89,12 +90,15 @@ export default function Dashboard() {
                 to={`/cours/${c.id}/modules`}
                 className="surface-card overflow-hidden group hover:shadow-elevated transition-all"
               >
-                <div className="h-24 gradient-hero relative">
+                <div className="h-24 course-card-header relative">
                   {c.is_open && (
-                    <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wider bg-success text-success-foreground px-2 py-0.5 rounded">
+                    <span className="absolute top-3 left-3 text-[10px] font-semibold uppercase tracking-wider bg-success text-success-foreground px-2 py-0.5 rounded">
                       Open
                     </span>
                   )}
+                  <div className="absolute top-3 right-3 bg-white/90 rounded-md p-1 shadow-sm">
+                    <img src={logoFmm} alt="Healthy Paths Project" className="h-6 w-auto object-contain" />
+                  </div>
                 </div>
                 <div className="p-5">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
