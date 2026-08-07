@@ -8,6 +8,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { RequireRole } from "@/components/RequireRole";
 import Index from "./pages/Index";
 import AuthPage from "./pages/Auth";
+import ResetPasswordPage from "./pages/ResetPassword";
 import Explorer from "./pages/Explorer";
 import CourseLayout from "./pages/CourseLayout";
 import CourseInfo from "./pages/CourseInfo";
@@ -41,6 +42,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
             <Route path="/explorer" element={<RequireAuth><Explorer /></RequireAuth>} />
             <Route path="/echanges" element={<RequireAuth><Echanges /></RequireAuth>} />
