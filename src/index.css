@@ -57,7 +57,7 @@
     --gradient-primary: linear-gradient(135deg, hsl(214 80% 30%), hsl(214 88% 52%));
     --gradient-hero: linear-gradient(135deg, hsl(214 80% 30%) 0%, hsl(188 78% 42%) 100%);
     --gradient-soft: linear-gradient(180deg, hsl(214 75% 97%) 0%, hsl(210 30% 98%) 100%);
-    --course-card-header: linear-gradient(135deg, hsl(199 89% 70%) 0%, hsl(199 89% 87%) 100%);
+    --course-card-header: linear-gradient(135deg, hsl(210, 100%, 87%) 0%, hsl(199 89% 87%) 100%);
 
     --shadow-sm: 0 1px 2px 0 hsl(215 28% 17% / 0.05);
     --shadow-card: 0 2px 8px -2px hsl(215 28% 17% / 0.08), 0 1px 2px hsl(215 28% 17% / 0.04);
