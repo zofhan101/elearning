@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, FolderKanban, Settings, ChevronDown, IdCard, Menu } from "lucide-react";
+import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, Info, ExternalLink, Settings, ChevronDown, IdCard, Menu } from "lucide-react";
 import logoFmm from "@/assets/logo-fmm.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <nav className="hidden md:flex items-center gap-1">
             <NavItem to="/" icon={<LayoutDashboard className="h-4 w-4" />} label="My Path" />
             <NavItem to="/explorer" icon={<Compass className="h-4 w-4" />} label="Explore" />
-            <NavItem to="/echanges" icon={<FolderKanban className="h-4 w-4" />} label="Discussions" />
+            <ExternalNavItem href="https://the-healthypaths-project.org/" icon={<Info className="h-4 w-4" />} label="About Project" />
             <NavItem to="/personnel" icon={<IdCard className="h-4 w-4" />} label="My Profile" />
             {isStaff && (
               <DropdownMenu>
@@ -93,7 +93,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <div className="container py-2 flex flex-col">
               <MobileItem onClick={() => go("/")} icon={<LayoutDashboard className="h-4 w-4" />} label="My Path" />
               <MobileItem onClick={() => go("/explorer")} icon={<Compass className="h-4 w-4" />} label="Explore" />
-              <MobileItem onClick={() => go("/echanges")} icon={<FolderKanban className="h-4 w-4" />} label="Discussions" />
+              <MobileExternalItem href="https://the-healthypaths-project.org/" icon={<Info className="h-4 w-4" />} label="About Project" onClick={() => setMobileOpen(false)} />
               <MobileItem onClick={() => go("/personnel")} icon={<IdCard className="h-4 w-4" />} label="My Profile" />
               {isStaff && (
                 <>
@@ -148,6 +148,21 @@ function NavItem({ to, icon, label }: { to: string; icon: ReactNode; label: stri
   );
 }
 
+function ExternalNavItem({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+    >
+      {icon}
+      {label}
+      <ExternalLink className="h-3 w-3" />
+    </a>
+  );
+}
+
 function MobileItem({ onClick, icon, label }: { onClick: () => void; icon: ReactNode; label: string }) {
   return (
     <button
@@ -157,5 +172,21 @@ function MobileItem({ onClick, icon, label }: { onClick: () => void; icon: React
       {icon}
       {label}
     </button>
+  );
+}
+
+function MobileExternalItem({ href, icon, label, onClick }: { href: string; icon: ReactNode; label: string; onClick: () => void }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-foreground hover:bg-muted transition-colors text-left"
+    >
+      {icon}
+      {label}
+      <ExternalLink className="h-3 w-3 ml-auto" />
+    </a>
   );
 }
