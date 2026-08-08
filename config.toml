@@ -1,0 +1,10 @@
+project_id = "kqwqqygnxpljcfpxuywh"
+
+[functions.approve-signup]
+verify_jwt = true
+
+[functions.request-password-reset]
+verify_jwt = false
+
+[functions.invite-member]
+verify_jwt = true

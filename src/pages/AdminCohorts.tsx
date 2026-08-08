@@ -59,6 +59,7 @@ export default function AdminCohorts() {
   const [quickDateNaissance, setQuickDateNaissance] = useState("");
   const [quickSexe, setQuickSexe] = useState<"M" | "F" | "">("");
   const [quickAdresse, setQuickAdresse] = useState("");
+  const [quickEmail, setQuickEmail] = useState("");
   const [quickParcours, setQuickParcours] = useState("");
   const [quickRole, setQuickRole] = useState<"enseignant" | "pat" | "etudiant" | "admin" | "">("");
   const [creating, setCreating] = useState(false);
@@ -177,6 +178,7 @@ export default function AdminCohorts() {
     date_naissance: "date_naissance", "date of birth": "date_naissance", dob: "date_naissance",
     sexe: "sexe", gender: "sexe",
     adresse: "adresse", address: "adresse",
+    email_institutionnel: "email_institutionnel", email: "email_institutionnel",
     parcours: "parcours", country: "parcours",
     member_role: "member_role", role: "member_role",
   };
@@ -214,6 +216,7 @@ export default function AdminCohorts() {
         date_naissance: mapped.date_naissance?.trim() || null,
         sexe: sexeRaw === "M" || sexeRaw === "F" ? sexeRaw : null,
         adresse: mapped.adresse?.trim() || null,
+        email_institutionnel: mapped.email_institutionnel?.trim() || null,
         parcours: resolveOption(PARCOURS, mapped.parcours ?? ""),
         member_role: role,
       });
@@ -341,7 +344,7 @@ export default function AdminCohorts() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">
-                Expected CSV columns: <code>nom</code> (Last Name, required), <code>prenom</code>, <code>date_naissance</code>, <code>sexe</code> (M/F), <code>adresse</code>, <code>parcours</code> (Country), <code>member_role</code> (Role, required — values: enseignant/Instructor, pat/PAT, etudiant/Student, admin/Admin). Country accepts either the internal value or the display label. Each row creates a new member and adds them to this cohort.
+                Expected CSV columns: <code>nom</code> (Last Name, required), <code>prenom</code>, <code>date_naissance</code>, <code>sexe</code> (M/F), <code>adresse</code>, <code>email_institutionnel</code> (Email), <code>parcours</code> (Country), <code>member_role</code> (Role, required — values: enseignant/Instructor, pat/PAT, etudiant/Student, admin/Admin). Country accepts either the internal value or the display label. Each row creates a new member and adds them to this cohort.
               </p>
 
               {results.length > 0 && (
@@ -380,7 +383,7 @@ export default function AdminCohorts() {
           setPickerOpen(o);
           if (!o) {
             setPersonnelSearch(""); setQuickNom(""); setQuickPrenom("");
-            setQuickDateNaissance(""); setQuickSexe(""); setQuickAdresse("");
+            setQuickDateNaissance(""); setQuickSexe(""); setQuickAdresse(""); setQuickEmail("");
             setQuickParcours(""); setQuickRole("");
           }
         }}>
@@ -419,6 +422,10 @@ export default function AdminCohorts() {
                     <Label>Address</Label>
                     <Input value={quickAdresse} onChange={(e) => setQuickAdresse(e.target.value)} />
                   </div>
+                  <div className="col-span-2">
+                    <Label>Email</Label>
+                    <Input type="email" value={quickEmail} onChange={(e) => setQuickEmail(e.target.value)} placeholder="name@example.com" />
+                  </div>
                   <div>
                     <Label>Country</Label>
                     <Select value={quickParcours || ANY} onValueChange={(v) => setQuickParcours(v === ANY ? "" : v)}>
@@ -454,6 +461,7 @@ export default function AdminCohorts() {
                           date_naissance: quickDateNaissance || null,
                           sexe: quickSexe || null,
                           adresse: quickAdresse.trim() || null,
+                          email_institutionnel: quickEmail.trim() || null,
                           parcours: quickParcours || null,
                           member_role: quickRole || null,
                         } as any)
@@ -467,7 +475,7 @@ export default function AdminCohorts() {
                       if (e2) return toast.error(e2.message);
                       toast.success("Member created and added");
                       setQuickNom(""); setQuickPrenom(""); setQuickDateNaissance("");
-                      setQuickSexe(""); setQuickAdresse("");
+                      setQuickSexe(""); setQuickAdresse(""); setQuickEmail("");
                       setQuickParcours(""); setQuickRole("");
                       await openPicker();
                       loadMembers(membersFor);

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +10,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Upload, Search, Save } from "lucide-react";
+import { Upload, Search, Save, KeyRound } from "lucide-react";
+
+const passwordSchema = z
+  .object({
+    password: z.string().min(6, "At least 6 characters").max(72),
+    confirm: z.string(),
+  })
+  .refine((d) => d.password === d.confirm, {
+    message: "Passwords do not match",
+    path: ["confirm"],
+  });
 
 type Mention = "blended_learning" | "summer_school" | "field_trip";
 type Parcours = "germany" | "madagascar" | "indonesia";
@@ -121,6 +132,8 @@ export default function Personnel() {
 
         {me && <PersonnelForm value={me} onSave={save} />}
 
+        <ChangePasswordCard />
+
         {isAdmin && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -221,6 +234,66 @@ function PersonnelForm({ value, onSave, onCancel }: { value: Personnel; onSave: 
           {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
           <Button onClick={() => onSave(v)}><Save className="h-4 w-4 mr-2" />Save</Button>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChangePasswordCard() {
+  const [values, setValues] = useState({ password: "", confirm: "" });
+  const [busy, setBusy] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = passwordSchema.safeParse(values);
+    if (!v.success) {
+      toast.error(v.error.issues[0].message);
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: v.data.password });
+      if (error) throw error;
+      toast.success("Password updated");
+      setValues({ password: "", confirm: "" });
+    } catch (err: any) {
+      toast.error(err.message ?? "Error updating password");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <KeyRound className="h-4 w-4" /> Change Password
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end max-w-xl">
+          <Field label="New Password">
+            <Input
+              type="password"
+              value={values.password}
+              onChange={(e) => setValues({ ...values, password: e.target.value })}
+              required
+            />
+          </Field>
+          <Field label="Confirm New Password">
+            <Input
+              type="password"
+              value={values.confirm}
+              onChange={(e) => setValues({ ...values, confirm: e.target.value })}
+              required
+            />
+          </Field>
+          <div className="md:col-span-2">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Updating…" : "Update Password"}
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

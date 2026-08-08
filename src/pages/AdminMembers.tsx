@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Mail, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -35,25 +35,62 @@ interface Member {
   date_naissance: string | null;
   sexe: "M" | "F" | null;
   adresse: string | null;
+  email_institutionnel: string | null;
   mention: string | null;
   parcours: string | null;
   member_role: "enseignant" | "pat" | "etudiant" | "admin" | null;
 }
 
-const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", mention: null, parcours: null, member_role: null };
+const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", email_institutionnel: "", mention: null, parcours: null, member_role: null };
 
 export default function AdminMembers() {
   const [list, setList] = useState<Member[]>([]);
+  const [linkedIds, setLinkedIds] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<Partial<Member>>(empty);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [invitingId, setInvitingId] = useState<string | null>(null);
 
   const load = async () => {
     const { data, error } = await supabase.from("personnel").select("*").order("nom");
     if (error) return toast.error(error.message);
     setList((data as any) ?? []);
+    const { data: profiles } = await supabase.from("profiles").select("id");
+    setLinkedIds(new Set((profiles ?? []).map((p: any) => p.id)));
   };
   useEffect(() => { load(); }, []);
+
+  const invite = async (m: Member) => {
+    if (!m.email_institutionnel?.trim()) {
+      return toast.error("Add an email address for this member first");
+    }
+    setInvitingId(m.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-member", {
+        body: { email: m.email_institutionnel, full_name: [m.prenom, m.nom].filter(Boolean).join(" ") },
+      });
+      if (error) {
+        let message = error.message ?? "Error sending invitation";
+        try {
+          const body = await error.context?.json();
+          if (body?.error) message = body.error;
+        } catch {
+          // ignore parsing failure, fall back to generic message
+        }
+        toast.error(message);
+        return;
+      }
+      if ((data as any)?.error) {
+        toast.error((data as any).error);
+        return;
+      }
+      toast.success(`Invitation sent to ${m.email_institutionnel}`);
+    } catch (err: any) {
+      toast.error(err.message ?? "Error sending invitation");
+    } finally {
+      setInvitingId(null);
+    }
+  };
 
   const save = async () => {
     if (!editing.nom?.trim()) return toast.error("Name required");
@@ -64,6 +101,7 @@ export default function AdminMembers() {
       date_naissance: editing.date_naissance || null,
       sexe: editing.sexe || null,
       adresse: editing.adresse || null,
+      email_institutionnel: editing.email_institutionnel?.trim() || null,
       mention: editing.mention || null,
       parcours: editing.parcours || null,
       member_role: editing.member_role,
@@ -89,7 +127,7 @@ export default function AdminMembers() {
   const filtered = list.filter((m) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
-    return [m.nom, m.prenom, m.mention, m.parcours].some((v) => v?.toLowerCase().includes(q));
+    return [m.nom, m.prenom, m.mention, m.parcours, m.email_institutionnel].some((v) => v?.toLowerCase().includes(q));
   });
 
   return (
@@ -136,6 +174,11 @@ export default function AdminMembers() {
                   <Label>Address</Label>
                   <Input value={editing.adresse ?? ""} onChange={(e) => setEditing({ ...editing, adresse: e.target.value })} />
                 </div>
+                <div className="col-span-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={editing.email_institutionnel ?? ""} onChange={(e) => setEditing({ ...editing, email_institutionnel: e.target.value })} placeholder="name@example.com" />
+                  <p className="text-xs text-muted-foreground mt-1">Used to send this member their login invitation.</p>
+                </div>
                 <div>
                   <Label>Country</Label>
                   <Select value={editing.parcours ?? ANY} onValueChange={(v) => setEditing({ ...editing, parcours: v === ANY ? null : v })}>
@@ -180,6 +223,7 @@ export default function AdminMembers() {
                 <TableHead>Gender</TableHead>
                 <TableHead>Program</TableHead>
                 <TableHead>Country</TableHead>
+                <TableHead>Access</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -192,6 +236,23 @@ export default function AdminMembers() {
                   <TableCell>{m.sexe}</TableCell>
                   <TableCell>{MENTIONS.find((x) => x.v === m.mention)?.l ?? ""}</TableCell>
                   <TableCell>{PARCOURS.find((x) => x.v === m.parcours)?.l ?? ""}</TableCell>
+                  <TableCell>
+                    {linkedIds.has(m.id) ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-success">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Active
+                      </span>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={invitingId === m.id}
+                        onClick={() => invite(m)}
+                      >
+                        <Mail className="h-3.5 w-3.5 mr-1" />
+                        {invitingId === m.id ? "Sending…" : "Invite"}
+                      </Button>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => { setEditing(m); setOpen(true); }}>
                       <Pencil className="h-4 w-4" />
@@ -203,7 +264,7 @@ export default function AdminMembers() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No members.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No members.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
