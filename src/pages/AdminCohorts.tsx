@@ -25,6 +25,7 @@ const ROLES = [
   { v: "enseignant", l: "Instructor" },
   { v: "pat", l: "PAT" },
   { v: "etudiant", l: "Student" },
+  { v: "admin", l: "Admin" },
 ];
 
 const ANY = "__any__";
@@ -58,9 +59,8 @@ export default function AdminCohorts() {
   const [quickDateNaissance, setQuickDateNaissance] = useState("");
   const [quickSexe, setQuickSexe] = useState<"M" | "F" | "">("");
   const [quickAdresse, setQuickAdresse] = useState("");
-  const [quickMention, setQuickMention] = useState("");
   const [quickParcours, setQuickParcours] = useState("");
-  const [quickRole, setQuickRole] = useState<"enseignant" | "pat" | "etudiant" | "">("");
+  const [quickRole, setQuickRole] = useState<"enseignant" | "pat" | "etudiant" | "admin" | "">("");
   const [creating, setCreating] = useState(false);
 
   const load = async () => {
@@ -177,7 +177,6 @@ export default function AdminCohorts() {
     date_naissance: "date_naissance", "date of birth": "date_naissance", dob: "date_naissance",
     sexe: "sexe", gender: "sexe",
     adresse: "adresse", address: "adresse",
-    mention: "mention", program: "mention", programme: "mention",
     parcours: "parcours", country: "parcours",
     member_role: "member_role", role: "member_role",
   };
@@ -215,7 +214,6 @@ export default function AdminCohorts() {
         date_naissance: mapped.date_naissance?.trim() || null,
         sexe: sexeRaw === "M" || sexeRaw === "F" ? sexeRaw : null,
         adresse: mapped.adresse?.trim() || null,
-        mention: resolveOption(MENTIONS, mapped.mention ?? ""),
         parcours: resolveOption(PARCOURS, mapped.parcours ?? ""),
         member_role: role,
       });
@@ -343,7 +341,7 @@ export default function AdminCohorts() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground -mt-2">
-                Expected CSV columns: <code>nom</code> (Last Name, required), <code>prenom</code>, <code>date_naissance</code>, <code>sexe</code> (M/F), <code>adresse</code>, <code>mention</code> (Program), <code>parcours</code> (Country), <code>member_role</code> (Role, required — values: enseignant/Instructor, pat/PAT, etudiant/Student). Program and Country accept either the internal value or the display label. Each row creates a new member and adds them to this cohort.
+                Expected CSV columns: <code>nom</code> (Last Name, required), <code>prenom</code>, <code>date_naissance</code>, <code>sexe</code> (M/F), <code>adresse</code>, <code>parcours</code> (Country), <code>member_role</code> (Role, required — values: enseignant/Instructor, pat/PAT, etudiant/Student, admin/Admin). Country accepts either the internal value or the display label. Each row creates a new member and adds them to this cohort.
               </p>
 
               {results.length > 0 && (
@@ -383,7 +381,7 @@ export default function AdminCohorts() {
           if (!o) {
             setPersonnelSearch(""); setQuickNom(""); setQuickPrenom("");
             setQuickDateNaissance(""); setQuickSexe(""); setQuickAdresse("");
-            setQuickMention(""); setQuickParcours(""); setQuickRole("");
+            setQuickParcours(""); setQuickRole("");
           }
         }}>
           <DialogContent className="max-w-2xl">
@@ -422,16 +420,6 @@ export default function AdminCohorts() {
                     <Input value={quickAdresse} onChange={(e) => setQuickAdresse(e.target.value)} />
                   </div>
                   <div>
-                    <Label>Program</Label>
-                    <Select value={quickMention || ANY} onValueChange={(v) => setQuickMention(v === ANY ? "" : v)}>
-                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ANY}>—</SelectItem>
-                        {MENTIONS.map((m) => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
                     <Label>Country</Label>
                     <Select value={quickParcours || ANY} onValueChange={(v) => setQuickParcours(v === ANY ? "" : v)}>
                       <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
@@ -443,7 +431,7 @@ export default function AdminCohorts() {
                   </div>
                   <div>
                     <Label>Role *</Label>
-                    <Select value={quickRole || ANY} onValueChange={(v) => setQuickRole(v === ANY ? "" : (v as "enseignant" | "pat" | "etudiant"))}>
+                    <Select value={quickRole || ANY} onValueChange={(v) => setQuickRole(v === ANY ? "" : (v as "enseignant" | "pat" | "etudiant" | "admin"))}>
                       <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={ANY}>—</SelectItem>
@@ -466,7 +454,6 @@ export default function AdminCohorts() {
                           date_naissance: quickDateNaissance || null,
                           sexe: quickSexe || null,
                           adresse: quickAdresse.trim() || null,
-                          mention: quickMention || null,
                           parcours: quickParcours || null,
                           member_role: quickRole || null,
                         } as any)
@@ -480,7 +467,7 @@ export default function AdminCohorts() {
                       if (e2) return toast.error(e2.message);
                       toast.success("Member created and added");
                       setQuickNom(""); setQuickPrenom(""); setQuickDateNaissance("");
-                      setQuickSexe(""); setQuickAdresse(""); setQuickMention("");
+                      setQuickSexe(""); setQuickAdresse("");
                       setQuickParcours(""); setQuickRole("");
                       await openPicker();
                       loadMembers(membersFor);

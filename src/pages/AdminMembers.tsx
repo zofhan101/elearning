@@ -24,6 +24,7 @@ const ROLES = [
   { v: "enseignant", l: "Instructor" },
   { v: "pat", l: "PAT" },
   { v: "etudiant", l: "Student" },
+  { v: "admin", l: "Admin" },
 ];
 const ANY = "__any__";
 
@@ -36,7 +37,7 @@ interface Member {
   adresse: string | null;
   mention: string | null;
   parcours: string | null;
-  member_role: "enseignant" | "pat" | "etudiant" | null;
+  member_role: "enseignant" | "pat" | "etudiant" | "admin" | null;
 }
 
 const empty: Partial<Member> = { nom: "", prenom: "", date_naissance: null, sexe: null, adresse: "", mention: null, parcours: null, member_role: null };
@@ -134,16 +135,6 @@ export default function AdminMembers() {
                 <div className="col-span-2">
                   <Label>Address</Label>
                   <Input value={editing.adresse ?? ""} onChange={(e) => setEditing({ ...editing, adresse: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Program</Label>
-                  <Select value={editing.mention ?? ANY} onValueChange={(v) => setEditing({ ...editing, mention: v === ANY ? null : v })}>
-                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ANY}>—</SelectItem>
-                      {MENTIONS.map((m) => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div>
                   <Label>Country</Label>
