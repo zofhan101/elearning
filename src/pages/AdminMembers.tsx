@@ -114,8 +114,14 @@ export default function AdminMembers() {
   const [editingPassword, setEditingPassword] = useState("");
   const [csvBusy, setCsvBusy] = useState(false);
   const [csvProgress, setCsvProgress] = useState<{ done: number; total: number } | null>(null);
+  const [conflict, setConflict] = useState<{ existing: Member; incoming: any; password: string } | null>(null);
+  const [conflictEditMode, setConflictEditMode] = useState(false);
+  const [conflictEdit, setConflictEdit] = useState<any>(null);
+  const conflictResolverRef = useRef<
+    ((action: { type: "overwrite" } | { type: "edited"; payload: any } | { type: "skip" }) => void) | null
+  >(null);
   const [csvResults, setCsvResults] = useState<
-    { nom: string; email: string; password: string; ok: boolean; error?: string }[] | null
+    { nom: string; email: string; password: string | null; ok: boolean; action: "created" | "updated" | "skipped" | "failed"; error?: string }[] | null
   >(null);
   const csvFileRef = useRef<HTMLInputElement>(null);
 
@@ -210,13 +216,43 @@ export default function AdminMembers() {
     }
   };
 
+  const tryCreateLogin = async (email: string, password: string, fullName: string) => {
+    try {
+      const { data: fnData, error: fnError } = await supabase.functions.invoke("create-member-login", {
+        body: { email, password, full_name: fullName },
+      });
+      if (fnError) {
+        let errMsg = fnError.message ?? "Error";
+        try {
+          const body = await fnError.context?.json();
+          if (body?.error) errMsg = body.error;
+        } catch {
+          // ignore parsing failure, fall back to generic message
+        }
+        return { ok: false, error: errMsg };
+      }
+      if ((fnData as any)?.error) return { ok: false, error: (fnData as any).error };
+      return { ok: true as const };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  };
+
+  const waitForConflictResolution = (existing: Member, incoming: any, password: string) => {
+    return new Promise<{ type: "overwrite" } | { type: "edited"; payload: any } | { type: "skip" }>((resolve) => {
+      conflictResolverRef.current = resolve;
+      setConflict({ existing, incoming, password });
+      setConflictEditMode(false);
+      setConflictEdit(incoming);
+    });
+  };
+
   const importCsv = async (file: File) => {
-    const text = await file.text();
+    const text = (await file.text()).replace(/^\uFEFF/, "");
     const rows = parseCsv(text);
     if (!rows.length) return toast.error("Empty file");
 
-    const toInsert: any[] = [];
-    const passwords: string[] = [];
+    const toProcess: { payload: any; password: string }[] = [];
     let skipped = 0;
     for (const r of rows) {
       const mapped: Record<string, string> = {};
@@ -231,72 +267,136 @@ export default function AdminMembers() {
       const role = resolveOption(ROLES, mapped.member_role);
       if (!role) { skipped++; continue; }
       const sexeRaw = mapped.sexe?.trim().toUpperCase();
-      toInsert.push({
-        nom: mapped.nom.trim(),
-        prenom: mapped.prenom?.trim() || null,
-        date_naissance: mapped.date_naissance?.trim() || null,
-        sexe: sexeRaw === "M" || sexeRaw === "F" ? sexeRaw : null,
-        adresse: mapped.adresse?.trim() || null,
-        email_institutionnel: mapped.email_institutionnel.trim(),
-        parcours: resolveOption(PARCOURS, mapped.parcours ?? ""),
-        member_role: role,
+      toProcess.push({
+        payload: {
+          nom: mapped.nom.trim(),
+          prenom: mapped.prenom?.trim() || null,
+          date_naissance: mapped.date_naissance?.trim() || null,
+          sexe: sexeRaw === "M" || sexeRaw === "F" ? sexeRaw : null,
+          adresse: mapped.adresse?.trim() || null,
+          email_institutionnel: mapped.email_institutionnel.trim(),
+          parcours: resolveOption(PARCOURS, mapped.parcours ?? ""),
+          member_role: role,
+        },
+        password: mapped.password?.trim() || generatePassword(),
       });
-      passwords.push(mapped.password?.trim() || generatePassword());
     }
 
-    if (toInsert.length === 0) {
+    if (toProcess.length === 0) {
       return toast.error("No valid rows found (Last Name, Email, and Role are required for each row)");
     }
 
     setCsvBusy(true);
-    setCsvProgress({ done: 0, total: toInsert.length });
+    setCsvProgress({ done: 0, total: toProcess.length });
 
-    const { data, error } = await supabase
-      .from("personnel")
-      .insert(toInsert)
-      .select("id, nom, email_institutionnel");
-    if (error) {
-      setCsvBusy(false);
-      setCsvProgress(null);
-      return toast.error(error.message);
-    }
+    const results: { nom: string; email: string; password: string | null; ok: boolean; action: "created" | "updated" | "skipped" | "failed"; error?: string }[] = [];
 
-    const created = data ?? [];
-    const results: { nom: string; email: string; password: string; ok: boolean; error?: string }[] = [];
+    for (let i = 0; i < toProcess.length; i++) {
+      let { payload, password } = toProcess[i];
+      let skip = false;
 
-    for (let i = 0; i < created.length; i++) {
-      const row: any = created[i];
-      const password = passwords[i];
-      try {
-        const { data: fnData, error: fnError } = await supabase.functions.invoke("create-member-login", {
-          body: { email: row.email_institutionnel, password, full_name: row.nom },
-        });
-        let ok = true;
-        let errMsg: string | undefined;
-        if (fnError) {
-          ok = false;
-          errMsg = fnError.message ?? "Error";
-          try {
-            const body = await fnError.context?.json();
-            if (body?.error) errMsg = body.error;
-          } catch {
-            // ignore parsing failure, fall back to generic message
-          }
-        } else if ((fnData as any)?.error) {
-          ok = false;
-          errMsg = (fnData as any).error;
+      // Detect a duplicate before attempting anything, and pause for the
+      // admin's decision rather than letting the insert fail.
+      while (true) {
+        const { data: existing } = await supabase
+          .from("personnel")
+          .select("*")
+          .eq("email_institutionnel", payload.email_institutionnel)
+          .maybeSingle();
+        if (!existing) break;
+
+        const action = await waitForConflictResolution(existing as Member, payload, password);
+
+        if (action.type === "skip") {
+          results.push({ nom: payload.nom, email: payload.email_institutionnel, password: null, ok: false, action: "skipped" });
+          skip = true;
+          break;
         }
-        results.push({ nom: row.nom, email: row.email_institutionnel, password, ok, error: errMsg });
-      } catch (err: any) {
-        results.push({ nom: row.nom, email: row.email_institutionnel, password, ok: false, error: err.message });
+
+        if (action.type === "edited") {
+          payload = action.payload;
+          continue; // re-check the (possibly new) email for a conflict
+        }
+
+        // "overwrite": update the existing roster row with the incoming data
+        const { id: existingId, ...rest } = existing as any;
+        void rest;
+        const { error: updErr } = await supabase
+          .from("personnel")
+          .update({
+            nom: payload.nom,
+            prenom: payload.prenom,
+            date_naissance: payload.date_naissance,
+            sexe: payload.sexe,
+            adresse: payload.adresse,
+            parcours: payload.parcours,
+            member_role: payload.member_role,
+          })
+          .eq("id", existingId);
+
+        if (updErr) {
+          results.push({ nom: payload.nom, email: payload.email_institutionnel, password: null, ok: false, action: "failed", error: updErr.message });
+        } else if (linkedIds.has(existingId)) {
+          results.push({ nom: payload.nom, email: payload.email_institutionnel, password: null, ok: true, action: "updated", error: "Login already active — password left unchanged" });
+        } else {
+          const loginResult = await tryCreateLogin(payload.email_institutionnel, password, payload.nom);
+          results.push({
+            nom: payload.nom, email: payload.email_institutionnel,
+            password: loginResult.ok ? password : null,
+            ok: loginResult.ok, action: "updated",
+            error: loginResult.ok ? undefined : loginResult.error,
+          });
+        }
+        skip = true;
+        break;
       }
-      setCsvProgress({ done: i + 1, total: created.length });
+
+      if (skip) {
+        setCsvProgress({ done: i + 1, total: toProcess.length });
+        continue;
+      }
+
+      // No conflict (or resolved to a free email): create as a new row
+      const { error: insertError } = await supabase.from("personnel").insert(payload);
+      if (insertError) {
+        results.push({ nom: payload.nom, email: payload.email_institutionnel, password: null, ok: false, action: "failed", error: insertError.message });
+      } else {
+        const loginResult = await tryCreateLogin(payload.email_institutionnel, password, payload.nom);
+        results.push({
+          nom: payload.nom, email: payload.email_institutionnel,
+          password: loginResult.ok ? password : null,
+          ok: loginResult.ok, action: "created",
+          error: loginResult.ok ? undefined : loginResult.error,
+        });
+      }
+      setCsvProgress({ done: i + 1, total: toProcess.length });
     }
 
     setCsvBusy(false);
     setCsvProgress(null);
     setCsvResults(results);
     load();
+  };
+
+  const resolveConflictOverwrite = () => {
+    conflictResolverRef.current?.({ type: "overwrite" });
+    setConflict(null);
+  };
+
+  const resolveConflictSkip = () => {
+    conflictResolverRef.current?.({ type: "skip" });
+    setConflict(null);
+  };
+
+  const resolveConflictSaveEdit = () => {
+    if (!conflictEdit?.email_institutionnel?.trim()) {
+      return toast.error("Email required");
+    }
+    conflictResolverRef.current?.({
+      type: "edited",
+      payload: { ...conflictEdit, email_institutionnel: conflictEdit.email_institutionnel.trim() },
+    });
+    setConflict(null);
   };
 
   const save = async () => {
@@ -633,7 +733,7 @@ export default function AdminMembers() {
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              {csvResults?.filter((r) => r.ok).length} of {csvResults?.length} logins created — no emails were sent. Copy these credentials to share with your tutorial.
+              {csvResults?.filter((r) => r.ok).length} of {csvResults?.length} rows processed successfully. No emails were sent — copy any new credentials below to share with your tutorial.
             </p>
             <div className="rounded-lg border overflow-x-auto max-h-96 overflow-y-auto">
               <Table>
@@ -650,13 +750,24 @@ export default function AdminMembers() {
                     <TableRow key={i}>
                       <TableCell>{r.nom}</TableCell>
                       <TableCell className="font-mono text-xs">{r.email}</TableCell>
-                      <TableCell className="font-mono text-xs">{r.ok ? r.password : "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">{r.password ?? "—"}</TableCell>
                       <TableCell>
-                        {r.ok ? (
+                        {r.action === "created" && (
                           <span className="inline-flex items-center gap-1 text-xs text-success">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Created
                           </span>
-                        ) : (
+                        )}
+                        {r.action === "updated" && (
+                          <span className="inline-flex items-center gap-1 text-xs text-success" title={r.error}>
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Updated
+                          </span>
+                        )}
+                        {r.action === "skipped" && (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <XCircle className="h-3.5 w-3.5" /> Skipped
+                          </span>
+                        )}
+                        {r.action === "failed" && (
                           <span className="inline-flex items-center gap-1 text-xs text-destructive" title={r.error}>
                             <XCircle className="h-3.5 w-3.5" /> Failed
                           </span>
@@ -673,7 +784,7 @@ export default function AdminMembers() {
               variant="outline"
               onClick={() => {
                 const text = (csvResults ?? [])
-                  .filter((r) => r.ok)
+                  .filter((r) => r.password)
                   .map((r) => `${r.nom}\t${r.email}\t${r.password}`)
                   .join("\n");
                 navigator.clipboard.writeText(text);
@@ -684,6 +795,98 @@ export default function AdminMembers() {
             </Button>
             <Button onClick={() => setCsvResults(null)}>Done</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!conflict} onOpenChange={(o) => { if (!o) resolveConflictSkip(); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Possible Duplicate</DialogTitle>
+          </DialogHeader>
+          {!conflictEditMode ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                An existing member already uses <span className="font-mono">{conflict?.incoming?.email_institutionnel}</span>. What would you like to do?
+              </p>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="surface-card p-3 space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Existing member</div>
+                  <div>{conflict?.existing?.nom} {conflict?.existing?.prenom}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {ROLES.find((x) => x.v === conflict?.existing?.member_role)?.l ?? "—"} · {PARCOURS.find((x) => x.v === conflict?.existing?.parcours)?.l ?? "—"}
+                  </div>
+                  <div className="text-xs">
+                    {conflict?.existing && linkedIds.has(conflict.existing.id) ? (
+                      <span className="text-success">Login active</span>
+                    ) : (
+                      <span className="text-muted-foreground">No login yet</span>
+                    )}
+                  </div>
+                </div>
+                <div className="surface-card p-3 space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">New data (CSV)</div>
+                  <div>{conflict?.incoming?.nom} {conflict?.incoming?.prenom}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {ROLES.find((x) => x.v === conflict?.incoming?.member_role)?.l ?? "—"} · {PARCOURS.find((x) => x.v === conflict?.incoming?.parcours)?.l ?? "—"}
+                  </div>
+                </div>
+              </div>
+              {conflict?.existing && linkedIds.has(conflict.existing.id) && (
+                <p className="text-xs text-muted-foreground">
+                  This member already has an active login — overwriting will update their roster details only, their password stays unchanged.
+                </p>
+              )}
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button variant="ghost" onClick={resolveConflictSkip}>Skip This Row</Button>
+                <Button variant="outline" onClick={() => setConflictEditMode(true)}>Edit</Button>
+                <Button onClick={resolveConflictOverwrite}>Overwrite &amp; Continue</Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Adjust this row's data (e.g. change the email) before continuing the import.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Last Name</Label>
+                  <Input value={conflictEdit?.nom ?? ""} onChange={(e) => setConflictEdit({ ...conflictEdit, nom: e.target.value })} />
+                </div>
+                <div>
+                  <Label>First Name</Label>
+                  <Input value={conflictEdit?.prenom ?? ""} onChange={(e) => setConflictEdit({ ...conflictEdit, prenom: e.target.value })} />
+                </div>
+                <div className="col-span-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={conflictEdit?.email_institutionnel ?? ""} onChange={(e) => setConflictEdit({ ...conflictEdit, email_institutionnel: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Role</Label>
+                  <Select value={conflictEdit?.member_role ?? ANY} onValueChange={(v) => setConflictEdit({ ...conflictEdit, member_role: v === ANY ? null : v })}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ANY}>—</SelectItem>
+                      {ROLES.map((r) => <SelectItem key={r.v} value={r.v}>{r.l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Country</Label>
+                  <Select value={conflictEdit?.parcours ?? ANY} onValueChange={(v) => setConflictEdit({ ...conflictEdit, parcours: v === ANY ? null : v })}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ANY}>—</SelectItem>
+                      {PARCOURS.map((m) => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConflictEditMode(false)}>Back</Button>
+                <Button onClick={resolveConflictSaveEdit}>Save &amp; Continue</Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </AppLayout>
