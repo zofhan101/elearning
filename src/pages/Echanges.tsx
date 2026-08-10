@@ -20,7 +20,6 @@ import {
   FileText,
   Users,
   GraduationCap,
-  Briefcase,
   Globe,
   File as FileIcon,
   Share2,
@@ -36,7 +35,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
-type Audience = "teachers" | "students" | "staff_admin" | "all";
+type Audience = "teachers" | "students" | "all";
 
 interface SFolder {
   id: string;
@@ -59,13 +58,11 @@ interface SFile {
 const audienceLabel: Record<Audience, string> = {
   teachers: "Instructors",
   students: "Students",
-  staff_admin: "Administrative & Technical Staff",
   all: "Everyone",
 };
 const audienceIcon: Record<Audience, any> = {
   teachers: GraduationCap,
   students: Users,
-  staff_admin: Briefcase,
   all: Globe,
 };
 
@@ -137,7 +134,7 @@ function DroppableFolder({ folder, canWrite, onOpen, onDelete, onShare }: { fold
 }
 
 export default function Echanges() {
-  const { user, isAdmin, isInstructor, isStaffAdmin } = useAuth();
+  const { user, isAdmin, isInstructor } = useAuth();
   const [currentFolder, setCurrentFolder] = useState<SFolder | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<SFolder[]>([]);
   const [folders, setFolders] = useState<SFolder[]>([]);
@@ -279,7 +276,6 @@ export default function Echanges() {
     const defaultName: Record<Audience, string> = {
       teachers: "Instructors Space",
       students: "Students Space",
-      staff_admin: "Administrative & Technical Staff Space",
       all: "Shared Space",
     };
     const { data: created, error } = await supabase
@@ -316,19 +312,18 @@ export default function Echanges() {
     load();
   };
 
-  // Permissions matrix (cross-sharing enabled)
+  // Permissions matrix
   // - Admin: everything
-  // - Instructor: write access on all audiences (teachers, students, staff_admin, all)
-  // - PAT (staff_admin): write access on all audiences
-  // - Student: read + download only
+  // - Teacher/Lecturer (instructor): write access on all audiences (teachers, students, all)
+  // - Student/Learner: read + download only
   const canWriteAudience = (a: Audience) => {
     if (isAdmin) return true;
-    if (isInstructor || isStaffAdmin) return true;
+    if (isInstructor) return true;
     return false;
   };
   const canWriteCurrentFolder = currentFolder ? canWriteAudience(currentFolder.audience) : false;
-  const allAudiences: Audience[] = ["all", "teachers", "students", "staff_admin"];
-  const creatableAudiences: Audience[] = isAdmin || isInstructor || isStaffAdmin ? allAudiences : [];
+  const allAudiences: Audience[] = ["all", "teachers", "students"];
+  const creatableAudiences: Audience[] = isAdmin || isInstructor ? allAudiences : [];
   const canCreateFolder = creatableAudiences.length > 0;
 
   return (
@@ -360,7 +355,6 @@ export default function Echanges() {
                           {creatableAudiences.includes("all") && <SelectItem value="all">Everyone</SelectItem>}
                           {creatableAudiences.includes("teachers") && <SelectItem value="teachers">Instructors</SelectItem>}
                           {creatableAudiences.includes("students") && <SelectItem value="students">Students</SelectItem>}
-                          {creatableAudiences.includes("staff_admin") && <SelectItem value="staff_admin">Administrative & Technical Staff</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
@@ -445,7 +439,7 @@ export default function Echanges() {
             <div className="space-y-2">
               <Label>Choose the target group</Label>
               <div className="grid grid-cols-2 gap-2">
-                {(["teachers", "students", "staff_admin", "all"] as Audience[]).map((a) => {
+                {(["teachers", "students", "all"] as Audience[]).map((a) => {
                   const Icon = audienceIcon[a];
                   const selected = shareAudience === a;
                   return (
