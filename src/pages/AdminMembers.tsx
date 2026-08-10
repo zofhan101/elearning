@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Search, Mail, CheckCircle2, KeyRound, Copy, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Pencil, Trash2, Search, Mail, CheckCircle2, KeyRound, Copy, RefreshCw, Upload, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,56 @@ function generatePassword() {
   return out;
 }
 
+const HEADER_ALIASES: Record<string, string> = {
+  nom: "nom", "last name": "nom", lastname: "nom",
+  prenom: "prenom", "first name": "prenom", firstname: "prenom",
+  date_naissance: "date_naissance", "date of birth": "date_naissance", dob: "date_naissance",
+  sexe: "sexe", gender: "sexe",
+  adresse: "adresse", address: "adresse",
+  email_institutionnel: "email_institutionnel", email: "email_institutionnel",
+  password: "password", mot_de_passe: "password",
+  parcours: "parcours", country: "parcours",
+  member_role: "member_role", role: "member_role",
+};
+
+function parseCsv(text: string): Record<string, string>[] {
+  const lines = text.replace(/\r/g, "").split("\n").filter((l) => l.trim().length);
+  if (!lines.length) return [];
+  const split = (line: string) => {
+    const out: string[] = []; let cur = ""; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQ) {
+        if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (c === '"') inQ = false;
+        else cur += c;
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === "," || c === ";" || c === "\t") { out.push(cur); cur = ""; }
+        else cur += c;
+      }
+    }
+    out.push(cur);
+    return out;
+  };
+  const headers = split(lines[0]).map((h) => h.trim().toLowerCase());
+  return lines.slice(1).map((l) => {
+    const cells = split(l);
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => (obj[h] = (cells[i] ?? "").trim()));
+    return obj;
+  });
+}
+
+function resolveOption(list: { v: string; l: string }[], raw: string): string | null {
+  const q = raw.trim().toLowerCase();
+  if (!q) return null;
+  const byValue = list.find((o) => o.v.toLowerCase() === q);
+  if (byValue) return byValue.v;
+  const byLabel = list.find((o) => o.l.toLowerCase() === q);
+  return byLabel ? byLabel.v : null;
+}
+
 interface Member {
   id: string;
   nom: string | null;
@@ -61,6 +111,16 @@ export default function AdminMembers() {
   const [passwordValue, setPasswordValue] = useState("");
   const [settingPassword, setSettingPassword] = useState(false);
   const [passwordCreated, setPasswordCreated] = useState(false);
+  const [editingPassword, setEditingPassword] = useState("");
+  const [csvBusy, setCsvBusy] = useState(false);
+  const [csvProgress, setCsvProgress] = useState<{ done: number; total: number } | null>(null);
+  const [csvResults, setCsvResults] = useState<
+    { nom: string; email: string; password: string; ok: boolean; error?: string }[] | null
+  >(null);
+  const csvFileRef = useRef<HTMLInputElement>(null);
+
+  const isEditingLinked = !!editing.id && linkedIds.has(editing.id);
+  const showPasswordField = !isEditingLinked;
 
   const load = async () => {
     const { data, error } = await supabase.from("personnel").select("*").order("nom");
@@ -150,20 +210,115 @@ export default function AdminMembers() {
     }
   };
 
+  const importCsv = async (file: File) => {
+    const text = await file.text();
+    const rows = parseCsv(text);
+    if (!rows.length) return toast.error("Empty file");
+
+    const toInsert: any[] = [];
+    const passwords: string[] = [];
+    let skipped = 0;
+    for (const r of rows) {
+      const mapped: Record<string, string> = {};
+      for (const key of Object.keys(r)) {
+        const canon = HEADER_ALIASES[key];
+        if (canon) mapped[canon] = r[key];
+      }
+      if (!mapped.nom?.trim() || !mapped.email_institutionnel?.trim() || !mapped.member_role?.trim()) {
+        skipped++;
+        continue;
+      }
+      const role = resolveOption(ROLES, mapped.member_role);
+      if (!role) { skipped++; continue; }
+      const sexeRaw = mapped.sexe?.trim().toUpperCase();
+      toInsert.push({
+        nom: mapped.nom.trim(),
+        prenom: mapped.prenom?.trim() || null,
+        date_naissance: mapped.date_naissance?.trim() || null,
+        sexe: sexeRaw === "M" || sexeRaw === "F" ? sexeRaw : null,
+        adresse: mapped.adresse?.trim() || null,
+        email_institutionnel: mapped.email_institutionnel.trim(),
+        parcours: resolveOption(PARCOURS, mapped.parcours ?? ""),
+        member_role: role,
+      });
+      passwords.push(mapped.password?.trim() || generatePassword());
+    }
+
+    if (toInsert.length === 0) {
+      return toast.error("No valid rows found (Last Name, Email, and Role are required for each row)");
+    }
+
+    setCsvBusy(true);
+    setCsvProgress({ done: 0, total: toInsert.length });
+
+    const { data, error } = await supabase
+      .from("personnel")
+      .insert(toInsert)
+      .select("id, nom, email_institutionnel");
+    if (error) {
+      setCsvBusy(false);
+      setCsvProgress(null);
+      return toast.error(error.message);
+    }
+
+    const created = data ?? [];
+    const results: { nom: string; email: string; password: string; ok: boolean; error?: string }[] = [];
+
+    for (let i = 0; i < created.length; i++) {
+      const row: any = created[i];
+      const password = passwords[i];
+      try {
+        const { data: fnData, error: fnError } = await supabase.functions.invoke("create-member-login", {
+          body: { email: row.email_institutionnel, password, full_name: row.nom },
+        });
+        let ok = true;
+        let errMsg: string | undefined;
+        if (fnError) {
+          ok = false;
+          errMsg = fnError.message ?? "Error";
+          try {
+            const body = await fnError.context?.json();
+            if (body?.error) errMsg = body.error;
+          } catch {
+            // ignore parsing failure, fall back to generic message
+          }
+        } else if ((fnData as any)?.error) {
+          ok = false;
+          errMsg = (fnData as any).error;
+        }
+        results.push({ nom: row.nom, email: row.email_institutionnel, password, ok, error: errMsg });
+      } catch (err: any) {
+        results.push({ nom: row.nom, email: row.email_institutionnel, password, ok: false, error: err.message });
+      }
+      setCsvProgress({ done: i + 1, total: created.length });
+    }
+
+    setCsvBusy(false);
+    setCsvProgress(null);
+    setCsvResults(results);
+    load();
+  };
+
   const save = async () => {
     if (!editing.nom?.trim()) return toast.error("Name required");
     if (!editing.member_role) return toast.error("Role required");
+    if (!editing.email_institutionnel?.trim()) return toast.error("Email required");
+    if (showPasswordField && editingPassword.trim().length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
+    const email = editing.email_institutionnel.trim();
     const payload: any = {
       nom: editing.nom,
       prenom: editing.prenom || null,
       date_naissance: editing.date_naissance || null,
       sexe: editing.sexe || null,
       adresse: editing.adresse || null,
-      email_institutionnel: editing.email_institutionnel?.trim() || null,
+      email_institutionnel: email,
       mention: editing.mention || null,
       parcours: editing.parcours || null,
       member_role: editing.member_role,
     };
+
     if (editing.id) {
       const { error } = await supabase.from("personnel").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
@@ -171,8 +326,43 @@ export default function AdminMembers() {
       const { error } = await supabase.from("personnel").insert(payload);
       if (error) return toast.error(error.message);
     }
+
+    if (showPasswordField && editingPassword.trim()) {
+      const fullName = [editing.prenom, editing.nom].filter(Boolean).join(" ");
+      const { data, error } = await supabase.functions.invoke("create-member-login", {
+        body: { email, password: editingPassword.trim(), full_name: fullName },
+      });
+      let loginError: string | null = null;
+      if (error) {
+        loginError = error.message ?? "Error creating login";
+        try {
+          const body = await error.context?.json();
+          if (body?.error) loginError = body.error;
+        } catch {
+          // ignore parsing failure, fall back to generic message
+        }
+      } else if ((data as any)?.error) {
+        loginError = (data as any).error;
+      }
+
+      if (loginError) {
+        toast.error(`Member saved, but login creation failed: ${loginError}`);
+        setOpen(false); setEditing(empty); setEditingPassword(""); load();
+        return;
+      }
+
+      setOpen(false); setEditing(empty);
+      load();
+      // Reuse the credentials-confirmation view from the Set Password dialog
+      setPasswordTarget({ ...(editing as Member), email_institutionnel: email });
+      setPasswordValue(editingPassword.trim());
+      setPasswordCreated(true);
+      setEditingPassword("");
+      return;
+    }
+
     toast.success("Saved");
-    setOpen(false); setEditing(empty); load();
+    setOpen(false); setEditing(empty); setEditingPassword(""); load();
   };
 
   const remove = async (id: string) => {
@@ -196,13 +386,33 @@ export default function AdminMembers() {
             <h1 className="text-2xl font-semibold">Members</h1>
             <p className="text-muted-foreground text-sm">Manually create and manage members (students, staff).</p>
           </div>
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(empty); }}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />New Member</Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            <input
+              ref={csvFileRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importCsv(f);
+                e.target.value = "";
+              }}
+            />
+            <Button variant="outline" disabled={csvBusy} onClick={() => csvFileRef.current?.click()}>
+              <Upload className="h-4 w-4 mr-1" />
+              {csvBusy ? `Importing ${csvProgress?.done ?? 0}/${csvProgress?.total ?? 0}…` : "Upload Members (CSV)"}
+            </Button>
+            <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditing(empty); setEditingPassword(""); } }}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { setEditing(empty); setEditingPassword(generatePassword()); }}><Plus className="h-4 w-4 mr-1" />New Member</Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editing.id ? "Edit Member" : "New Member"}</DialogTitle>
+                <DialogTitle>
+                  {editing.id
+                    ? (showPasswordField ? "Edit Member & Create Login" : "Edit Member")
+                    : "New Member"}
+                </DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -233,10 +443,22 @@ export default function AdminMembers() {
                   <Input value={editing.adresse ?? ""} onChange={(e) => setEditing({ ...editing, adresse: e.target.value })} />
                 </div>
                 <div className="col-span-2">
-                  <Label>Email</Label>
+                  <Label>Email *</Label>
                   <Input type="email" value={editing.email_institutionnel ?? ""} onChange={(e) => setEditing({ ...editing, email_institutionnel: e.target.value })} placeholder="name@example.com" />
-                  <p className="text-xs text-muted-foreground mt-1">Used to send this member their login invitation.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Used as this member's login.</p>
                 </div>
+                {showPasswordField && (
+                  <div className="col-span-2">
+                    <Label>Password *</Label>
+                    <div className="flex gap-2">
+                      <Input value={editingPassword} onChange={(e) => setEditingPassword(e.target.value)} />
+                      <Button type="button" variant="outline" size="icon" onClick={() => setEditingPassword(generatePassword())} title="Generate a new password">
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">At least 6 characters. The login is created immediately — no email is sent.</p>
+                  </div>
+                )}
                 <div>
                   <Label>Country</Label>
                   <Select value={editing.parcours ?? ANY} onValueChange={(v) => setEditing({ ...editing, parcours: v === ANY ? null : v })}>
@@ -260,16 +482,20 @@ export default function AdminMembers() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={save}>Save</Button>
+                <Button onClick={save}>{showPasswordField ? "Create Member & Login" : "Save"}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <div className="surface-card p-3 mb-4 flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input className="border-0 focus-visible:ring-0" placeholder="Search by name, program, country…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <p className="text-xs text-muted-foreground -mt-2 mb-4">
+          CSV columns: <code>nom</code> (Last Name, required), <code>prenom</code>, <code>date_naissance</code>, <code>sexe</code> (M/F), <code>adresse</code>, <code>email_institutionnel</code> (Email, required), <code>password</code> (optional — auto-generated if omitted), <code>parcours</code> (Country), <code>member_role</code> (Role, required). A login is created for every row immediately.
+        </p>
 
         <div className="surface-card overflow-x-auto">
           <Table>
@@ -318,7 +544,7 @@ export default function AdminMembers() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => { setEditing(m); setOpen(true); }}>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditing(m); setEditingPassword(linkedIds.has(m.id) ? "" : generatePassword()); setOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="text-destructive" onClick={() => remove(m.id)}>
@@ -397,6 +623,67 @@ export default function AdminMembers() {
               </DialogFooter>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!csvResults} onOpenChange={(o) => { if (!o) setCsvResults(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import Results</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {csvResults?.filter((r) => r.ok).length} of {csvResults?.length} logins created — no emails were sent. Copy these credentials to share with your tutorial.
+            </p>
+            <div className="rounded-lg border overflow-x-auto max-h-96 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Password</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {csvResults?.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{r.nom}</TableCell>
+                      <TableCell className="font-mono text-xs">{r.email}</TableCell>
+                      <TableCell className="font-mono text-xs">{r.ok ? r.password : "—"}</TableCell>
+                      <TableCell>
+                        {r.ok ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-success">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Created
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs text-destructive" title={r.error}>
+                            <XCircle className="h-3.5 w-3.5" /> Failed
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const text = (csvResults ?? [])
+                  .filter((r) => r.ok)
+                  .map((r) => `${r.nom}\t${r.email}\t${r.password}`)
+                  .join("\n");
+                navigator.clipboard.writeText(text);
+                toast.success("Credentials copied");
+              }}
+            >
+              <Copy className="h-4 w-4 mr-1" /> Copy All Credentials
+            </Button>
+            <Button onClick={() => setCsvResults(null)}>Done</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AppLayout>
