@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Search, Mail, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Mail, CheckCircle2, KeyRound, Copy, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,13 @@ const ROLES = [
 ];
 const ANY = "__any__";
 
+function generatePassword() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let out = "";
+  for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
 interface Member {
   id: string;
   nom: string | null;
@@ -50,6 +57,10 @@ export default function AdminMembers() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [invitingId, setInvitingId] = useState<string | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<Member | null>(null);
+  const [passwordValue, setPasswordValue] = useState("");
+  const [settingPassword, setSettingPassword] = useState(false);
+  const [passwordCreated, setPasswordCreated] = useState(false);
 
   const load = async () => {
     const { data, error } = await supabase.from("personnel").select("*").order("nom");
@@ -89,6 +100,53 @@ export default function AdminMembers() {
       toast.error(err.message ?? "Error sending invitation");
     } finally {
       setInvitingId(null);
+    }
+  };
+
+  const openSetPassword = (m: Member) => {
+    setPasswordTarget(m);
+    setPasswordValue(generatePassword());
+    setPasswordCreated(false);
+  };
+
+  const setMemberPassword = async () => {
+    if (!passwordTarget) return;
+    if (!passwordTarget.email_institutionnel?.trim()) {
+      return toast.error("Add an email address for this member first");
+    }
+    if (passwordValue.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
+    setSettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-member-login", {
+        body: {
+          email: passwordTarget.email_institutionnel,
+          password: passwordValue,
+          full_name: [passwordTarget.prenom, passwordTarget.nom].filter(Boolean).join(" "),
+        },
+      });
+      if (error) {
+        let message = error.message ?? "Error creating login";
+        try {
+          const body = await error.context?.json();
+          if (body?.error) message = body.error;
+        } catch {
+          // ignore parsing failure, fall back to generic message
+        }
+        toast.error(message);
+        return;
+      }
+      if ((data as any)?.error) {
+        toast.error((data as any).error);
+        return;
+      }
+      setPasswordCreated(true);
+      load();
+    } catch (err: any) {
+      toast.error(err.message ?? "Error creating login");
+    } finally {
+      setSettingPassword(false);
     }
   };
 
@@ -242,15 +300,21 @@ export default function AdminMembers() {
                         <CheckCircle2 className="h-3.5 w-3.5" /> Active
                       </span>
                     ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={invitingId === m.id}
-                        onClick={() => invite(m)}
-                      >
-                        <Mail className="h-3.5 w-3.5 mr-1" />
-                        {invitingId === m.id ? "Sending…" : "Invite"}
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={invitingId === m.id}
+                          onClick={() => invite(m)}
+                        >
+                          <Mail className="h-3.5 w-3.5 mr-1" />
+                          {invitingId === m.id ? "Sending…" : "Invite"}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => openSetPassword(m)}>
+                          <KeyRound className="h-3.5 w-3.5 mr-1" />
+                          Set Password
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -270,6 +334,71 @@ export default function AdminMembers() {
           </Table>
         </div>
       </div>
+
+      <Dialog open={!!passwordTarget} onOpenChange={(o) => { if (!o) setPasswordTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Password — {passwordTarget?.nom} {passwordTarget?.prenom}</DialogTitle>
+          </DialogHeader>
+          {passwordCreated ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Login created and already active — no email was sent. Share these credentials with the member yourself (e.g. in your tutorial):
+              </p>
+              <div className="surface-card p-3 space-y-2 text-sm">
+                <div><span className="text-muted-foreground">Email:</span> <span className="font-mono">{passwordTarget?.email_institutionnel}</span></div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Password:</span>
+                  <span className="font-mono">{passwordValue}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => { navigator.clipboard.writeText(passwordValue); toast.success("Password copied"); }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The member can change this password themselves anytime from the "My Profile" menu once logged in.
+              </p>
+              <DialogFooter>
+                <Button onClick={() => setPasswordTarget(null)}>Done</Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {!passwordTarget?.email_institutionnel?.trim() && (
+                <p className="text-xs text-destructive">
+                  This member has no email yet. Cancel, edit the member to add one, then try again.
+                </p>
+              )}
+              <div>
+                <Label>Email</Label>
+                <Input value={passwordTarget?.email_institutionnel ?? ""} disabled />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <div className="flex gap-2">
+                  <Input value={passwordValue} onChange={(e) => setPasswordValue(e.target.value)} />
+                  <Button type="button" variant="outline" size="icon" onClick={() => setPasswordValue(generatePassword())} title="Generate a new password">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">At least 6 characters. You'll be able to copy it after creating the login.</p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setPasswordTarget(null)}>Cancel</Button>
+                <Button onClick={setMemberPassword} disabled={settingPassword || !passwordTarget?.email_institutionnel?.trim()}>
+                  {settingPassword ? "Creating…" : "Create Login"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

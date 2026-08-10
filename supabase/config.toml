@@ -5,3 +5,9 @@ verify_jwt = true
 
 [functions.request-password-reset]
 verify_jwt = false
+
+[functions.invite-member]
+verify_jwt = true
+
+[functions.create-member-login]
+verify_jwt = true
