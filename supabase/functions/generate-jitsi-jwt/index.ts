@@ -74,7 +74,8 @@ Deno.serve(async (req) => {
 
     const appId = Deno.env.get("JAAS_APP_ID");
     const privateKeyPem = Deno.env.get("JAAS_PRIVATE_KEY");
-    if (!appId || !privateKeyPem) {
+    const kid = Deno.env.get("JAAS_KID");
+    if (!appId || !privateKeyPem || !kid) {
       return json({ error: "Video conferencing is not configured yet" }, 500);
     }
     const cryptoKey = await pemToCryptoKey(privateKeyPem);
@@ -85,7 +86,7 @@ Deno.serve(async (req) => {
       [personnel?.prenom, personnel?.nom].filter(Boolean).join(" ") || caller.email || "Guest";
 
     const jwt = await create(
-      { alg: "RS256", typ: "JWT" },
+      { alg: "RS256", typ: "JWT", kid },
       {
         aud: "jitsi",
         iss: "chat",
