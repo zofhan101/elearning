@@ -13,7 +13,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { SafeHtml } from "@/components/SafeHtml";
 import { toast } from "sonner";
 
-type Kind = "text" | "video" | "link" | "file";
+type Kind = "text" | "video" | "link" | "file" | "forum" | "videoconference";
 
 interface Block {
   id: string;
@@ -145,6 +145,8 @@ export default function AdminContents() {
                         <SelectItem value="video">Video (URL)</SelectItem>
                         <SelectItem value="link">External Link</SelectItem>
                         <SelectItem value="file">File (URL)</SelectItem>
+                        <SelectItem value="forum">Internal Forum</SelectItem>
+                        <SelectItem value="videoconference">Video Conference</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -168,6 +170,14 @@ export default function AdminContents() {
                     <Label>Content</Label>
                     <RichTextEditor value={editing.body ?? ""} onChange={(v) => setEditing({ ...editing, body: v })} />
                   </div>
+                ) : editing.kind === "forum" ? (
+                  <p className="text-xs text-muted-foreground border rounded-md p-3">
+                    No setup needed — students and instructors will be able to create discussion threads here once this content is saved.
+                  </p>
+                ) : editing.kind === "videoconference" ? (
+                  <p className="text-xs text-muted-foreground border rounded-md p-3">
+                    No setup needed — a private video room is created automatically for this content once saved. Anyone who can view this course can join.
+                  </p>
                 ) : (
                   <div className="space-y-2">
                     <Label>URL</Label>

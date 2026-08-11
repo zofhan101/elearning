@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, Link2, Play, BookMarked, Plus, Calendar, ChevronRight, Download, File, Video, Image as ImageIcon } from "lucide-react";
+import { FileText, Link2, Play, BookMarked, Plus, Calendar, ChevronRight, Download, File, Video, Image as ImageIcon, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { ForumBlock } from "@/components/ForumBlock";
 
 const KIND_ICON: any = {
   presentation: Play,
@@ -13,6 +14,8 @@ const KIND_ICON: any = {
   video: Video,
   file: File,
   image: ImageIcon,
+  forum: MessageSquare,
+  videoconference: Video,
 };
 
 function iconForUrl(url?: string | null) {
@@ -103,6 +106,52 @@ export default function CourseModules() {
                         const isVideo = b.kind === "video" || /\.(mp4|webm|mov|m4v)(\?|$)/i.test(b.url ?? "");
                         const isImage = b.kind === "image" || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(b.url ?? "");
                         const isPdf = /\.pdf(\?|$)/i.test(b.url ?? "");
+
+                        if (b.kind === "forum") {
+                          return (
+                            <div key={b.id} className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                                  <Icon className="h-4 w-4" />
+                                </div>
+                                <span className="truncate">{b.title}</span>
+                              </div>
+                              <ForumBlock blockId={b.id} />
+                            </div>
+                          );
+                        }
+
+                        if (b.kind === "videoconference") {
+                          const room = `hpp-${b.id.replace(/-/g, "")}`;
+                          const meetUrl = `https://meet.jit.si/${room}`;
+                          return (
+                            <div key={b.id} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-sm font-medium">
+                                  <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                                    <Icon className="h-4 w-4" />
+                                  </div>
+                                  <span className="truncate">{b.title}</span>
+                                </div>
+                                <a
+                                  href={meetUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline shrink-0"
+                                >
+                                  Open in new tab
+                                </a>
+                              </div>
+                              <iframe
+                                src={meetUrl}
+                                title={b.title}
+                                allow="camera; microphone; fullscreen; display-capture; autoplay"
+                                className="w-full h-[500px] rounded-md border border-border bg-black"
+                              />
+                            </div>
+                          );
+                        }
+
                         const content = (
                           <div className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
                             <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
