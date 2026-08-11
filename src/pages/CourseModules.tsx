@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { ForumBlock } from "@/components/ForumBlock";
+import { VideoConferenceBlock } from "@/components/VideoConferenceBlock";
 
 const KIND_ICON: any = {
   presentation: Play,
@@ -122,32 +123,15 @@ export default function CourseModules() {
                         }
 
                         if (b.kind === "videoconference") {
-                          const room = `hpp-${b.id.replace(/-/g, "")}`;
-                          const meetUrl = `https://meet.jit.si/${room}`;
                           return (
                             <div key={b.id} className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-sm font-medium">
-                                  <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
-                                    <Icon className="h-4 w-4" />
-                                  </div>
-                                  <span className="truncate">{b.title}</span>
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                                  <Icon className="h-4 w-4" />
                                 </div>
-                                <a
-                                  href={meetUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-primary hover:underline shrink-0"
-                                >
-                                  Open in new tab
-                                </a>
+                                <span className="truncate">{b.title}</span>
                               </div>
-                              <iframe
-                                src={meetUrl}
-                                title={b.title}
-                                allow="camera; microphone; fullscreen; display-capture; autoplay"
-                                className="w-full h-[500px] rounded-md border border-border bg-black"
-                              />
+                              <VideoConferenceBlock blockId={b.id} />
                             </div>
                           );
                         }

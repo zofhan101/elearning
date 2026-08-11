@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.create-member-login]
 verify_jwt = true
+
+[functions.generate-jitsi-jwt]
+verify_jwt = true
