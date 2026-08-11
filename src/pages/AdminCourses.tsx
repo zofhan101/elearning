@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, FolderOpen, ListChecks } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderOpen, ListChecks, ChevronUp, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ interface Course {
   end_date: string | null;
   is_open: boolean;
   cover_color: string | null;
+  position: number;
   cohortIds: string[];
 }
 
@@ -47,7 +48,7 @@ export default function AdminCourses() {
   const [editing, setEditing] = useState<Partial<Course>>(empty);
 
   const load = async () => {
-    const { data } = await supabase.from("courses").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("courses").select("*").order("position", { ascending: true });
     setCourses(((data as any) ?? []).map((c: any) => ({ ...c, cohortIds: [] })));
 
     const { data: links } = await supabase
@@ -86,6 +87,7 @@ export default function AdminCourses() {
       if (error) return toast.error(error.message);
     } else {
       payload.created_by = user?.id;
+      payload.position = courses.length;
       const { data, error } = await supabase.from("courses").insert(payload).select("id").single();
       if (error || !data) return toast.error(error?.message ?? "Error");
       courseId = data.id;
@@ -113,6 +115,24 @@ export default function AdminCourses() {
     if (error) return toast.error(error.message);
     toast.success("Course deleted");
     load();
+  };
+
+  const move = async (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= courses.length) return;
+    const a = courses[index];
+    const b = courses[target];
+
+    const reordered = [...courses];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    setCourses(reordered);
+
+    const { error: e1 } = await supabase.from("courses").update({ position: b.position }).eq("id", a.id);
+    const { error: e2 } = await supabase.from("courses").update({ position: a.position }).eq("id", b.id);
+    if (e1 || e2) {
+      toast.error("Failed to reorder");
+      load();
+    }
   };
 
   return (
@@ -173,8 +193,30 @@ export default function AdminCourses() {
         </div>
 
         <div className="grid gap-3">
-          {courses.map((c) => (
+          {courses.map((c, index) => (
             <div key={c.id} className="surface-card p-4 flex flex-wrap items-center gap-4">
+              <div className="flex flex-col gap-0.5 shrink-0">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={index === 0}
+                  onClick={() => move(index, -1)}
+                  title="Move up"
+                >
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={index === courses.length - 1}
+                  onClick={() => move(index, 1)}
+                  title="Move down"
+                >
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </div>
               <div className="flex-1 min-w-[240px]">
                 <div className="font-medium">{c.title}</div>
                 {c.subtitle && <div className="text-sm text-muted-foreground">{c.subtitle}</div>}

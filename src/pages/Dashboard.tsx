@@ -27,7 +27,7 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       const [{ data: c }, { data: a }] = await Promise.all([
-        supabase.from("courses").select("*").order("created_at", { ascending: false }),
+        supabase.from("courses").select("*").order("position", { ascending: true }),
         supabase.from("attempts").select("id").not("submitted_at", "is", null).eq("user_id", user!.id),
       ]);
       setCourses(c ?? []);

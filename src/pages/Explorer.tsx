@@ -16,7 +16,7 @@ export default function Explorer() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("courses").select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("courses").select("*").order("position", { ascending: true });
       setCourses(data ?? []);
       const { data: en } = await supabase.from("enrollments").select("course_id").eq("user_id", user!.id);
       setEnrolled(new Set((en ?? []).map((e: any) => e.course_id)));
