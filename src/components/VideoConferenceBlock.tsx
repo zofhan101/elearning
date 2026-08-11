@@ -8,29 +8,23 @@ declare global {
   }
 }
 
-const loadedScripts = new Set<string>();
-function loadJaasScript(appId: string): Promise<void> {
+let scriptPromise: Promise<void> | null = null;
+function loadJaasScript(): Promise<void> {
   if (window.JitsiMeetExternalAPI) return Promise.resolve();
-  if (loadedScripts.has(appId)) {
-    // Script tag already inserted, wait for it to finish loading
-    return new Promise((resolve) => {
-      const check = setInterval(() => {
-        if (window.JitsiMeetExternalAPI) {
-          clearInterval(check);
-          resolve();
-        }
-      }, 100);
-    });
-  }
-  loadedScripts.add(appId);
-  return new Promise((resolve, reject) => {
+  if (scriptPromise) return scriptPromise;
+  scriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `https://8x8.vc/${appId}/external_api.js`;
+    // Served from our own domain (see public/jitsi-external-api.js) instead
+    // of https://8x8.vc/{appId}/external_api.js — some networks filter
+    // dynamically-inserted third-party scripts more aggressively than
+    // same-origin ones, even though the URL itself is reachable directly.
+    script.src = "/jitsi-external-api.js";
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("Unable to load the video service"));
     document.body.appendChild(script);
   });
+  return scriptPromise;
 }
 
 export function VideoConferenceBlock({ blockId }: { blockId: string }) {
@@ -61,7 +55,7 @@ export function VideoConferenceBlock({ blockId }: { blockId: string }) {
 
         setOpenUrl(`https://8x8.vc/${data.appId}/${data.room}?jwt=${encodeURIComponent(data.jwt)}`);
 
-        await loadJaasScript(data.appId);
+        await loadJaasScript();
         if (cancelled || !containerRef.current) return;
 
         apiRef.current = new window.JitsiMeetExternalAPI("8x8.vc", {
