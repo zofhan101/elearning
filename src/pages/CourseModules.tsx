@@ -34,6 +34,16 @@ export default function CourseModules() {
   const [modules, setModules] = useState<any[]>([]);
   const [openModule, setOpenModule] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Record<string, any[]>>({});
+  const [openBlocks, setOpenBlocks] = useState<Set<string>>(new Set());
+
+  const toggleBlock = (id: string) => {
+    setOpenBlocks((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -107,82 +117,64 @@ export default function CourseModules() {
                         const isVideo = b.kind === "video" || /\.(mp4|webm|mov|m4v)(\?|$)/i.test(b.url ?? "");
                         const isImage = b.kind === "image" || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(b.url ?? "");
                         const isPdf = /\.pdf(\?|$)/i.test(b.url ?? "");
+                        const isItemOpen = openBlocks.has(b.id);
 
-                        if (b.kind === "forum") {
-                          return (
-                            <div key={b.id} className="space-y-2">
-                              <div className="flex items-center gap-2 text-sm font-medium">
-                                <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
-                                  <Icon className="h-4 w-4" />
-                                </div>
-                                <span className="truncate">{b.title}</span>
+                        return (
+                          <div key={b.id} className="rounded-lg border border-border bg-card overflow-hidden">
+                            <button
+                              className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/50 transition-colors"
+                              onClick={() => toggleBlock(b.id)}
+                            >
+                              <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                                <Icon className="h-4 w-4" />
                               </div>
-                              <ForumBlock blockId={b.id} />
-                            </div>
-                          );
-                        }
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm truncate">{b.title}</div>
+                                {b.section && (
+                                  <div className="text-xs text-muted-foreground mt-0.5">Lecturer: {b.section}</div>
+                                )}
+                              </div>
+                              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isItemOpen ? "rotate-90" : ""}`} />
+                            </button>
 
-                        if (b.kind === "videoconference") {
-                          return (
-                            <div key={b.id} className="space-y-2">
-                              <div className="flex items-center gap-2 text-sm font-medium">
-                                <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
-                                  <Icon className="h-4 w-4" />
-                                </div>
-                                <span className="truncate">{b.title}</span>
+                            {isItemOpen && (
+                              <div className="border-t border-border p-3">
+                                {b.kind === "forum" ? (
+                                  <ForumBlock blockId={b.id} />
+                                ) : b.kind === "videoconference" ? (
+                                  <VideoConferenceBlock blockId={b.id} />
+                                ) : (
+                                  <div>
+                                    {b.body && <p className="text-sm text-muted-foreground">{b.body}</p>}
+                                    {b.meta && <div className="text-xs text-muted-foreground mt-1">{b.meta}</div>}
+                                    {b.url && (isVideo || isImage || isPdf) && (
+                                      <div className="mt-3">
+                                        {isVideo && (
+                                          <video src={b.url} controls className="w-full max-h-[480px] rounded-md bg-black" />
+                                        )}
+                                        {isImage && (
+                                          <img src={b.url} alt={b.title} className="w-full max-h-[480px] rounded-md object-contain bg-muted" />
+                                        )}
+                                        {isPdf && (
+                                          <iframe src={b.url} title={b.title} className="w-full h-[600px] rounded-md border border-border bg-card" />
+                                        )}
+                                      </div>
+                                    )}
+                                    {b.url && (
+                                      <div className="mt-2 flex gap-2">
+                                        <a href={b.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                          <Link2 className="h-3 w-3" /> Open
+                                        </a>
+                                        <a href={b.url} download className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                          <Download className="h-3 w-3" /> Download
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              <VideoConferenceBlock blockId={b.id} />
-                            </div>
-                          );
-                        }
-
-                        const content = (
-                          <div className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
-                            <div className="h-9 w-9 rounded-md bg-primary-soft text-primary flex items-center justify-center shrink-0">
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm flex items-center gap-2">
-                                <span className="truncate">{b.title}</span>
-                                {b.url && <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
-                              </div>
-                              {b.section && (
-                                <div className="text-xs text-muted-foreground mt-0.5">Lecturer: {b.section}</div>
-                              )}
-                              {b.body && <p className="text-sm text-muted-foreground mt-0.5">{b.body}</p>}
-                              {b.meta && <div className="text-xs text-muted-foreground mt-1">{b.meta}</div>}
-                              {b.url && (isVideo || isImage || isPdf) && (
-                                <div className="mt-3">
-                                  {isVideo && (
-                                    <video src={b.url} controls className="w-full max-h-[480px] rounded-md bg-black" />
-                                  )}
-                                  {isImage && (
-                                    <img src={b.url} alt={b.title} className="w-full max-h-[480px] rounded-md object-contain bg-muted" />
-                                  )}
-                                  {isPdf && (
-                                    <iframe src={b.url} title={b.title} className="w-full h-[600px] rounded-md border border-border bg-card" />
-                                  )}
-                                </div>
-                              )}
-                              {b.url && (
-                                <div className="mt-2 flex gap-2">
-                                  <a href={b.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                    <Link2 className="h-3 w-3" /> Open
-                                  </a>
-                                  <a href={b.url} download className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                    <Download className="h-3 w-3" /> Download
-                                  </a>
-                                </div>
-                              )}
-                            </div>
+                            )}
                           </div>
-                        );
-                        return b.url && !(isVideo || isImage || isPdf) ? (
-                          <a key={b.id} href={b.url} target="_blank" rel="noopener noreferrer" className="block">
-                            {content}
-                          </a>
-                        ) : (
-                          <div key={b.id}>{content}</div>
                         );
                       })}
                     </div>
