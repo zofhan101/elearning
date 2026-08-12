@@ -13,7 +13,7 @@ import { SortableList } from "@/components/SortableList";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { toast } from "sonner";
 
-type Kind = "single" | "multiple" | "true_false" | "short_text";
+type Kind = "mcq_single" | "mcq_multi" | "true_false" | "short";
 
 interface Question {
   id: string;
@@ -32,7 +32,7 @@ export default function AdminQuestions() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [evalTitle, setEvalTitle] = useState("");
   const [open, setOpen] = useState(false);
-  const defaults: Partial<Question> = { prompt: "", kind: "single", choices: ["", ""], correct: [], points: 1, time_limit_seconds: null };
+  const defaults: Partial<Question> = { prompt: "", kind: "mcq_single", choices: ["", ""], correct: [], points: 1, time_limit_seconds: null };
   const [editing, setEditing] = useState<Partial<Question>>(defaults);
 
   const load = async () => {
@@ -50,7 +50,7 @@ export default function AdminQuestions() {
     const payload: any = {
       prompt: editing.prompt,
       kind: editing.kind,
-      choices: editing.kind === "short_text" ? null : editing.choices,
+      choices: editing.kind === "short" ? null : editing.choices,
       correct: editing.correct,
       points: editing.points ?? 1,
       time_limit_seconds: editing.time_limit_seconds && editing.time_limit_seconds > 0 ? editing.time_limit_seconds : null,
@@ -94,7 +94,7 @@ export default function AdminQuestions() {
   const addChoice = () => setEditing({ ...editing, choices: [...choices, ""] });
   const removeChoice = (i: number) => setEditing({ ...editing, choices: choices.filter((_, k) => k !== i), correct: correct.filter((c) => c !== i).map((c) => (c > i ? c - 1 : c)) });
   const toggleCorrect = (i: number) => {
-    if (editing.kind === "single" || editing.kind === "true_false") {
+    if (editing.kind === "mcq_single" || editing.kind === "true_false") {
       setEditing({ ...editing, correct: [i] });
     } else {
       const has = correct.includes(i);
@@ -125,13 +125,13 @@ export default function AdminQuestions() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
                     <Label>Type</Label>
-                    <Select value={editing.kind} onValueChange={(v: Kind) => setEditing({ ...editing, kind: v, correct: [], choices: v === "true_false" ? ["True", "False"] : v === "short_text" ? null : ["", ""] })}>
+                    <Select value={editing.kind} onValueChange={(v: Kind) => setEditing({ ...editing, kind: v, correct: [], choices: v === "true_false" ? ["True", "False"] : v === "short" ? null : ["", ""] })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="single">Single Choice</SelectItem>
-                        <SelectItem value="multiple">Multiple Choice</SelectItem>
+                        <SelectItem value="mcq_single">Single Choice</SelectItem>
+                        <SelectItem value="mcq_multi">Multiple Choice</SelectItem>
                         <SelectItem value="true_false">True / False</SelectItem>
-                        <SelectItem value="short_text">Short Answer</SelectItem>
+                        <SelectItem value="short">Short Answer</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -155,7 +155,7 @@ export default function AdminQuestions() {
                   <Label>Prompt *</Label>
                   <RichTextEditor value={editing.prompt ?? ""} onChange={(v) => setEditing({ ...editing, prompt: v })} />
                 </div>
-                {editing.kind !== "short_text" && (
+                {editing.kind !== "short" && (
                   <div>
                     <Label>Choices</Label>
                     <div className="space-y-2 mt-1">
@@ -178,7 +178,7 @@ export default function AdminQuestions() {
                     </div>
                   </div>
                 )}
-                {editing.kind === "short_text" && (
+                {editing.kind === "short" && (
                   <div>
                     <Label>Expected Answer(s) (separated by |)</Label>
                     <Input
