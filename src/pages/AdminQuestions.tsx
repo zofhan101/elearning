@@ -15,24 +15,38 @@ import { toast } from "sonner";
 
 type Kind = "mcq_single" | "mcq_multi" | "true_false" | "short";
 
+interface Choice {
+  id: string;
+  label: string;
+}
+
 interface Question {
   id: string;
   evaluation_id: string;
   prompt: string;
   kind: Kind;
-  choices: any;
-  correct: any;
+  choices: Choice[] | null;
+  correct: string[] | null;
   points: number;
   position: number;
   time_limit_seconds: number | null;
 }
+
+const newChoiceId = () => Math.random().toString(36).slice(2, 8);
 
 export default function AdminQuestions() {
   const { courseId, evalId } = useParams();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [evalTitle, setEvalTitle] = useState("");
   const [open, setOpen] = useState(false);
-  const defaults: Partial<Question> = { prompt: "", kind: "mcq_single", choices: ["", ""], correct: [], points: 1, time_limit_seconds: null };
+  const defaults: Partial<Question> = {
+    prompt: "",
+    kind: "mcq_single",
+    choices: [{ id: newChoiceId(), label: "" }, { id: newChoiceId(), label: "" }],
+    correct: [],
+    points: 1,
+    time_limit_seconds: null,
+  };
   const [editing, setEditing] = useState<Partial<Question>>(defaults);
 
   const load = async () => {
@@ -84,21 +98,25 @@ export default function AdminQuestions() {
     );
   };
 
-  const choices: string[] = Array.isArray(editing.choices) ? editing.choices : [];
-  const correct: number[] = Array.isArray(editing.correct) ? editing.correct : [];
+  const choices: Choice[] = Array.isArray(editing.choices) ? editing.choices : [];
+  const correct: string[] = Array.isArray(editing.correct) ? editing.correct : [];
 
-  const updateChoice = (i: number, v: string) => {
-    const next = [...choices]; next[i] = v;
-    setEditing({ ...editing, choices: next });
+  const updateChoice = (id: string, v: string) => {
+    setEditing({ ...editing, choices: choices.map((c) => (c.id === id ? { ...c, label: v } : c)) });
   };
-  const addChoice = () => setEditing({ ...editing, choices: [...choices, ""] });
-  const removeChoice = (i: number) => setEditing({ ...editing, choices: choices.filter((_, k) => k !== i), correct: correct.filter((c) => c !== i).map((c) => (c > i ? c - 1 : c)) });
-  const toggleCorrect = (i: number) => {
+  const addChoice = () => setEditing({ ...editing, choices: [...choices, { id: newChoiceId(), label: "" }] });
+  const removeChoice = (id: string) =>
+    setEditing({
+      ...editing,
+      choices: choices.filter((c) => c.id !== id),
+      correct: correct.filter((c) => c !== id),
+    });
+  const toggleCorrect = (id: string) => {
     if (editing.kind === "mcq_single" || editing.kind === "true_false") {
-      setEditing({ ...editing, correct: [i] });
+      setEditing({ ...editing, correct: [id] });
     } else {
-      const has = correct.includes(i);
-      setEditing({ ...editing, correct: has ? correct.filter((c) => c !== i) : [...correct, i] });
+      const has = correct.includes(id);
+      setEditing({ ...editing, correct: has ? correct.filter((c) => c !== id) : [...correct, id] });
     }
   };
 
@@ -125,7 +143,22 @@ export default function AdminQuestions() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
                     <Label>Type</Label>
-                    <Select value={editing.kind} onValueChange={(v: Kind) => setEditing({ ...editing, kind: v, correct: [], choices: v === "true_false" ? ["True", "False"] : v === "short" ? null : ["", ""] })}>
+                    <Select
+                      value={editing.kind}
+                      onValueChange={(v: Kind) =>
+                        setEditing({
+                          ...editing,
+                          kind: v,
+                          correct: [],
+                          choices:
+                            v === "true_false"
+                              ? [{ id: "true", label: "True" }, { id: "false", label: "False" }]
+                              : v === "short"
+                              ? null
+                              : [{ id: newChoiceId(), label: "" }, { id: newChoiceId(), label: "" }],
+                        })
+                      }
+                    >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="mcq_single">Single Choice</SelectItem>
@@ -160,11 +193,11 @@ export default function AdminQuestions() {
                     <Label>Choices</Label>
                     <div className="space-y-2 mt-1">
                       {choices.map((c, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <Checkbox checked={correct.includes(i)} onCheckedChange={() => toggleCorrect(i)} />
-                          <Input value={c} onChange={(e) => updateChoice(i, e.target.value)} placeholder={`Choice ${i + 1}`} disabled={editing.kind === "true_false"} />
+                        <div key={c.id} className="flex items-center gap-2">
+                          <Checkbox checked={correct.includes(c.id)} onCheckedChange={() => toggleCorrect(c.id)} />
+                          <Input value={c.label} onChange={(e) => updateChoice(c.id, e.target.value)} placeholder={`Choice ${i + 1}`} disabled={editing.kind === "true_false"} />
                           {editing.kind !== "true_false" && (
-                            <Button variant="ghost" size="sm" onClick={() => removeChoice(i)}>
+                            <Button variant="ghost" size="sm" onClick={() => removeChoice(c.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
