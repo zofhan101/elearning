@@ -26,6 +26,11 @@ export default function AuthPage() {
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recoveryBusy, setRecoveryBusy] = useState(false);
   const [recoverySent, setRecoverySent] = useState(false);
+  const [sideImageOk, setSideImageOk] = useState(false);
+
+  const sideImageUrl = `${
+    supabase.storage.from("course-files").getPublicUrl("site/login-image").data.publicUrl
+  }?t=${Math.floor(Date.now() / 60000)}`;
 
   useEffect(() => {
     if (!loading && user) navigate("/");
@@ -95,57 +100,74 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-soft p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img src={logoFmm} alt="Healthy Paths Project Logo" className="h-40 w-40 mx-auto mb-4 object-contain" />
-          
-          <h1 className="text-3xl font-semibold text-foreground">Healthy Paths Project</h1>
-          <p className="text-muted-foreground mt-1">Your learning space</p>
-        </div>
+    <div className="min-h-screen flex">
+      {/* Left half: existing sign-in interface */}
+      <div className="w-full md:w-1/2 flex items-center justify-center gradient-soft p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <img src={logoFmm} alt="Healthy Paths Project Logo" className="h-40 w-40 mx-auto mb-4 object-contain" />
 
-        <div className="surface-card p-6">
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={signin.email}
-                onChange={(e) => setSignin({ ...signin, email: e.target.value })}
-                placeholder="your email address"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Your Password</Label>
-                <button
-                  type="button"
-                  onClick={openRecovery}
-                  className="text-xs text-primary hover:underline"
-                >
-                  Forgot your password?
-                </button>
+            <h1 className="text-3xl font-semibold text-foreground">Healthy Paths Project</h1>
+            <p className="text-muted-foreground mt-1">Your learning space</p>
+          </div>
+
+          <div className="surface-card p-6">
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={signin.email}
+                  onChange={(e) => setSignin({ ...signin, email: e.target.value })}
+                  placeholder="your email address"
+                  required
+                />
               </div>
-              <Input
-                id="password"
-                type="password"
-                value={signin.password}
-                onChange={(e) => setSignin({ ...signin, password: e.target.value })}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Please wait…" : "Sign In"}
-            </Button>
-          </form>
-        </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Your Password</Label>
+                  <button
+                    type="button"
+                    onClick={openRecovery}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={signin.password}
+                  onChange={(e) => setSignin({ ...signin, password: e.target.value })}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={busy}>
+                {busy ? "Please wait…" : "Sign In"}
+              </Button>
+            </form>
+          </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          LARTIC Laboratory ~ Faculty of Medicine Antananarivo — Learning space.
-        </p>
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            LARTIC Laboratory ~ Faculty of Medicine Antananarivo — Learning space.
+          </p>
+        </div>
       </div>
+
+      {/* Right half: full-bleed image, hidden on small screens */}
+      {sideImageOk && (
+        <div className="hidden md:block md:w-1/2 relative">
+          <img
+            src={sideImageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </div>
+      )}
+      {/* Off-screen probe: detects whether an image has been uploaded without
+          ever showing a broken-image icon if none exists yet. */}
+      <img src={sideImageUrl} alt="" className="hidden" onLoad={() => setSideImageOk(true)} onError={() => setSideImageOk(false)} />
 
       <Dialog open={recoveryOpen} onOpenChange={(o) => { setRecoveryOpen(o); if (!o) setRecoverySent(false); }}>
         <DialogContent className="max-w-sm">
