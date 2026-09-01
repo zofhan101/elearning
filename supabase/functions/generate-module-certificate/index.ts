@@ -31,12 +31,18 @@ Deno.serve(async (req) => {
     });
     const { data: userData } = await userClient.auth.getUser();
     const caller = userData.user;
-    if (!caller) return json({ error: "Not authenticated" }, 401);
+    if (!caller) {
+      console.error("[cert] no caller — auth.getUser() returned null");
+      return json({ error: "Not authenticated" }, 401);
+    }
+    console.error(`[cert] called by user ${caller.id}`);
 
     const { attempt_id } = await req.json();
     if (!attempt_id || typeof attempt_id !== "string") {
+      console.error("[cert] missing attempt_id in request body");
       return json({ error: "Missing attempt_id" }, 400);
     }
+    console.error(`[cert] attempt_id=${attempt_id}`);
 
     const admin = createClient(supabaseUrl, serviceKey);
 
@@ -46,21 +52,42 @@ Deno.serve(async (req) => {
       .select("id, user_id, evaluation_id, submitted_at, score, max_score")
       .eq("id", attempt_id)
       .maybeSingle();
-    if (attemptErr) return json({ error: attemptErr.message }, 500);
-    if (!attempt) return json({ error: "Attempt not found" }, 404);
-    if (attempt.user_id !== caller.id) return json({ error: "This attempt does not belong to you" }, 403);
-    if (!attempt.submitted_at) return json({ error: "Attempt not yet submitted" }, 400);
+    if (attemptErr) {
+      console.error(`[cert] attempt fetch error: ${attemptErr.message}`);
+      return json({ error: attemptErr.message }, 500);
+    }
+    if (!attempt) {
+      console.error("[cert] attempt not found");
+      return json({ error: "Attempt not found" }, 404);
+    }
+    if (attempt.user_id !== caller.id) {
+      console.error(`[cert] attempt belongs to ${attempt.user_id}, not caller ${caller.id}`);
+      return json({ error: "This attempt does not belong to you" }, 403);
+    }
+    if (!attempt.submitted_at) {
+      console.error("[cert] attempt not submitted yet");
+      return json({ error: "Attempt not yet submitted" }, 400);
+    }
+    console.error(`[cert] attempt OK — evaluation_id=${attempt.evaluation_id} score=${attempt.score}/${attempt.max_score}`);
 
     const { data: evaluation, error: evalErr } = await admin
       .from("evaluations")
       .select("id, title, module_id")
       .eq("id", attempt.evaluation_id)
       .maybeSingle();
-    if (evalErr) return json({ error: evalErr.message }, 500);
-    if (!evaluation) return json({ error: "Assessment not found" }, 404);
+    if (evalErr) {
+      console.error(`[cert] evaluation fetch error: ${evalErr.message}`);
+      return json({ error: evalErr.message }, 500);
+    }
+    if (!evaluation) {
+      console.error("[cert] evaluation not found");
+      return json({ error: "Assessment not found" }, 404);
+    }
+    console.error(`[cert] evaluation "${evaluation.title}" module_id=${evaluation.module_id ?? "NULL"}`);
 
     if (!evaluation.module_id) {
       // Not a module-linked assessment — nothing to certify, not an error.
+      console.error("[cert] STOP: evaluation has no module_id — not eligible for a certificate");
       return json({ issued: false, reason: "not_module_linked" });
     }
 
@@ -73,6 +100,7 @@ Deno.serve(async (req) => {
       .eq("module_id", evaluation.module_id)
       .maybeSingle();
     if (existing) {
+      console.error(`[cert] STOP: certificate already exists at ${existing.storage_path}`);
       return json({ issued: true, already_existed: true, storage_path: existing.storage_path });
     }
 
@@ -84,10 +112,15 @@ Deno.serve(async (req) => {
       .from("evaluations")
       .select("id")
       .eq("module_id", evaluation.module_id);
-    if (moduleEvalsErr) return json({ error: moduleEvalsErr.message }, 500);
+    if (moduleEvalsErr) {
+      console.error(`[cert] moduleEvals fetch error: ${moduleEvalsErr.message}`);
+      return json({ error: moduleEvalsErr.message }, 500);
+    }
 
     const evalIds = (moduleEvals ?? []).map((e: any) => e.id);
+    console.error(`[cert] module has ${evalIds.length} linked assessment(s): ${evalIds.join(", ")}`);
     if (evalIds.length === 0) {
+      console.error("[cert] STOP: no evaluations linked to this module");
       return json({ issued: false, reason: "not_passing" });
     }
 
@@ -100,7 +133,10 @@ Deno.serve(async (req) => {
       .in("evaluation_id", evalIds)
       .not("submitted_at", "is", null)
       .order("submitted_at", { ascending: false });
-    if (attemptsErr) return json({ error: attemptsErr.message }, 500);
+    if (attemptsErr) {
+      console.error(`[cert] attempts fetch error: ${attemptsErr.message}`);
+      return json({ error: attemptsErr.message }, 500);
+    }
 
     const latestByEval = new Map<string, { score: number; max_score: number }>();
     for (const a of attempts ?? []) {
@@ -108,11 +144,13 @@ Deno.serve(async (req) => {
         latestByEval.set(a.evaluation_id, { score: Number(a.score ?? 0), max_score: Number(a.max_score ?? 0) });
       }
     }
+    console.error(`[cert] found submitted attempts for ${latestByEval.size}/${evalIds.length} of the linked assessments`);
 
     // Every assessment linked to this module must have been attempted at
     // least once before the module can be validated.
     const allAttempted = evalIds.every((id: string) => latestByEval.has(id));
     if (!allAttempted) {
+      console.error("[cert] STOP: not every linked assessment has a submitted attempt yet");
       return json({ issued: false, reason: "assessments_incomplete" });
     }
 
@@ -122,10 +160,13 @@ Deno.serve(async (req) => {
       totalScore += v.score;
       totalMax += v.max_score;
     }
+    console.error(`[cert] aggregate score = ${totalScore}/${totalMax}`);
     const passed = totalMax > 0 && totalScore / totalMax >= 0.5;
     if (!passed) {
+      console.error("[cert] STOP: aggregate score below 50%");
       return json({ issued: false, reason: "not_passing" });
     }
+    console.error("[cert] PASSED — generating certificate PDF");
 
     const { data: moduleRow } = await admin
       .from("modules")
@@ -155,7 +196,10 @@ Deno.serve(async (req) => {
     const { error: uploadErr } = await admin.storage
       .from("certificates")
       .upload(storagePath, pdfBytes, { contentType: "application/pdf", upsert: true });
-    if (uploadErr) return json({ error: uploadErr.message }, 500);
+    if (uploadErr) {
+      console.error(`[cert] storage upload error: ${uploadErr.message}`);
+      return json({ error: uploadErr.message }, 500);
+    }
 
     const { error: insertErr } = await admin.from("module_certificates").insert({
       user_id: caller.id,
@@ -164,10 +208,15 @@ Deno.serve(async (req) => {
       attempt_id: attempt.id,
       storage_path: storagePath,
     });
-    if (insertErr) return json({ error: insertErr.message }, 500);
+    if (insertErr) {
+      console.error(`[cert] module_certificates insert error: ${insertErr.message}`);
+      return json({ error: insertErr.message }, 500);
+    }
 
+    console.error(`[cert] SUCCESS — certificate stored at ${storagePath}`);
     return json({ issued: true, already_existed: false, storage_path: storagePath });
   } catch (e) {
+    console.error(`[cert] UNCAUGHT EXCEPTION: ${(e as Error).message}`);
     return json({ error: (e as Error).message }, 500);
   }
 });
