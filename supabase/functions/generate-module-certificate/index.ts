@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
     const country = personnel?.parcours ? countryLabels[personnel.parcours] ?? personnel.parcours : "—";
     const moduleTitle = moduleRow?.title ?? "Module";
 
-    const pdfBytes = await buildCertificatePdf({ participantName, country, moduleTitle });
+    const pdfBytes = await buildCertificatePdf({ participantName, country, moduleTitle, totalScore, totalMax });
 
     const storagePath = `${caller.id}/${evaluation.module_id}.pdf`;
     const { error: uploadErr } = await admin.storage
@@ -221,32 +221,34 @@ Deno.serve(async (req) => {
   }
 });
 
-async function buildCertificatePdf(opts: { participantName: string; country: string; moduleTitle: string }): Promise<Uint8Array> {
+async function buildCertificatePdf(opts: {
+  participantName: string;
+  country: string;
+  moduleTitle: string;
+  totalScore: number;
+  totalMax: number;
+}): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const page = doc.addPage([595.28, 841.89]); // A4
   const { width, height } = page.getSize();
 
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const italicFont = await doc.embedFont(StandardFonts.HelveticaOblique);
 
+  const dark = rgb(0.12, 0.16, 0.22);
+  const gray = rgb(0.4, 0.44, 0.5);
+  const lightGray = rgb(0.55, 0.58, 0.63);
+
+  // --- Header: logo, tagline, date (fixed at top) ---
   const logoBytes = base64ToBytes(LOGO_BASE64);
   const logoImage = await doc.embedPng(logoBytes);
   const logoW = 90;
   const logoH = (logoImage.height / logoImage.width) * logoW;
   page.drawImage(logoImage, { x: 50, y: height - 50 - logoH, width: logoW, height: logoH });
 
-  const dark = rgb(0.12, 0.16, 0.22);
-  const gray = rgb(0.4, 0.44, 0.5);
-
   const tagline = "A DAAD SDG-Partnerships Program on Sustainable Global Health";
-  const italicFont = await doc.embedFont(StandardFonts.HelveticaOblique);
-  page.drawText(tagline, {
-    x: 50,
-    y: height - 50 - logoH - 16,
-    size: 9,
-    font: italicFont,
-    color: gray,
-  });
+  page.drawText(tagline, { x: 50, y: height - 50 - logoH - 16, size: 9, font: italicFont, color: gray });
 
   const dateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   page.drawText(dateStr, {
@@ -257,65 +259,98 @@ async function buildCertificatePdf(opts: { participantName: string; country: str
     color: gray,
   });
 
-  let y = height - 50 - logoH - 80;
+  // --- Footer: fixed at bottom ---
+  const footerY = 130;
+
+  // --- Main content block: vertically centered between the header and footer ---
+  const contentTop = height - 50 - logoH - 60; // safe margin below the tagline
+  const contentBottom = footerY + 70; // safe margin above the footer divider
+
+  const pct = opts.totalMax > 0 ? Math.round((opts.totalScore / opts.totalMax) * 100) : 0;
+  const scoreText = `${opts.totalScore} / ${opts.totalMax} (${pct}%)`;
+
+  const infoLines: [string, string][] = [
+    ["Module Name:", opts.moduleTitle],
+    ["Participant Name:", opts.participantName],
+    ["Country of Origin:", opts.country],
+    ["Score Obtained:", scoreText],
+  ];
+
+  const bodyText =
+    "This document certifies that the participant named above has successfully passed the " +
+    "knowledge assessment(s) associated with this module, as part of the HEALTHY PATHS Program — " +
+    "The DAAD SDG-Partnerships Program on Sustainable Global Health.";
+  const bodySize = 11;
+  const maxWidth = width - 180;
+
+  // Pre-wrap the body text so we can measure the full block height before
+  // drawing anything, in order to center it.
+  const words = bodyText.split(" ");
+  const bodyLines: string[] = [];
+  let lineStr = "";
+  for (const word of words) {
+    const test = lineStr ? `${lineStr} ${word}` : word;
+    if (font.widthOfTextAtSize(test, bodySize) > maxWidth) {
+      bodyLines.push(lineStr);
+      lineStr = word;
+    } else {
+      lineStr = test;
+    }
+  }
+  if (lineStr) bodyLines.push(lineStr);
+
+  const subjectHeight = 13;
+  const gapAfterSubject = 50;
+  const infoLineHeight = 34;
+  const gapAfterInfo = 40;
+  const bodyLineHeight = 18;
+
+  const blockHeight =
+    subjectHeight +
+    gapAfterSubject +
+    infoLines.length * infoLineHeight +
+    gapAfterInfo +
+    bodyLines.length * bodyLineHeight;
+
+  const available = contentTop - contentBottom;
+  let y = contentBottom + available / 2 + blockHeight / 2;
 
   const drawCentered = (text: string, size: number, useFont = font, color = dark) => {
     const w = useFont.widthOfTextAtSize(text, size);
     page.drawText(text, { x: (width - w) / 2, y, size, font: useFont, color });
   };
 
-  drawCentered("Concerne : Attestation de validation de module", 13, fontBold);
-  y -= 50;
+  drawCentered("Subject: Module Validation Certificate", subjectHeight, fontBold);
+  y -= gapAfterSubject;
 
-  const line = (label: string, value: string) => {
+  for (const [label, value] of infoLines) {
     const labelSize = 12;
     page.drawText(label, { x: 90, y, size: labelSize, font: fontBold, color: dark });
     const labelW = fontBold.widthOfTextAtSize(label, labelSize);
     page.drawText(value, { x: 90 + labelW + 6, y, size: labelSize, font, color: dark });
-    y -= 34;
-  };
-
-  line("Nom du module :", opts.moduleTitle);
-  line("Nom du participant :", opts.participantName);
-  line("Pays d'origine :", opts.country);
-
-  y -= 40;
-  const bodyText =
-    "Ce document atteste que le participant mentionné ci-dessus a validé avec succès " +
-    "l'évaluation de connaissances associée à ce module, dans le cadre du programme " +
-    "HEALTHY PATHS — The DAAD SDG-Partnerships Program on Sustainable Global Health.";
-  const bodySize = 11;
-  const maxWidth = width - 180;
-  const words = bodyText.split(" ");
-  let lineStr = "";
-  for (const word of words) {
-    const test = lineStr ? `${lineStr} ${word}` : word;
-    if (font.widthOfTextAtSize(test, bodySize) > maxWidth) {
-      page.drawText(lineStr, { x: 90, y, size: bodySize, font, color: gray });
-      y -= 18;
-      lineStr = word;
-    } else {
-      lineStr = test;
-    }
+    y -= infoLineHeight;
   }
-  if (lineStr) page.drawText(lineStr, { x: 90, y, size: bodySize, font, color: gray });
 
-  // Footer / signature block
-  const footerY = 130;
+  y -= gapAfterInfo;
+  for (const l of bodyLines) {
+    page.drawText(l, { x: 90, y, size: bodySize, font, color: gray });
+    y -= bodyLineHeight;
+  }
+
+  // --- Footer / signature block ---
   page.drawLine({
     start: { x: 90, y: footerY + 40 },
     end: { x: width - 90, y: footerY + 40 },
     thickness: 0.5,
     color: rgb(0.85, 0.87, 0.9),
   });
-  drawCenteredAt(page, font, "Attestation valable sans signature", 10, footerY, gray, width);
-  drawCenteredAt(page, fontBold, "Le Comité Scientifique", 12, footerY - 20, dark, width);
+  drawCenteredAt(page, font, "This certificate is valid without a signature", 10, footerY, gray, width);
+  drawCenteredAt(page, fontBold, "The Scientific Committee", 12, footerY - 20, dark, width);
 
-  const lightGray = rgb(0.55, 0.58, 0.63);
   drawCenteredAt(
     page,
     font,
-    "Université Syiah Kuala (Indonésie) · Université d'Antananarivo (Madagascar) · Université de Göttingen (Allemagne)",
+    "Syiah Kuala University (Indonesia) · University of Antananarivo (Madagascar) · University of Göttingen (Germany)",
     7.5,
     footerY - 45,
     lightGray,
