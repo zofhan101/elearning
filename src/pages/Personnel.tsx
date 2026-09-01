@@ -329,9 +329,22 @@ function CertificatesCard() {
   const download = async (cert: Certificate) => {
     setDownloadingId(cert.id);
     try {
-      const { data, error } = await supabase.storage.from("certificates").download(cert.storage_path);
-      if (error) throw error;
-      const url = URL.createObjectURL(data);
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("certificates")
+        .createSignedUrl(cert.storage_path, 60);
+      if (signErr) throw signErr;
+      if (!signed?.signedUrl) throw new Error("Could not generate a download link");
+
+      // Fetch through the signed URL directly (bypassing supabase-js's own
+      // fetch call) with cache: "no-store" — the signed URL's token is
+      // unique per call, but some browsers still cache by base path, so
+      // this belt-and-suspenders approach guarantees fresh bytes even
+      // right after the certificate was just regenerated.
+      const res = await fetch(signed.signedUrl, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `Certificate - ${cert.modules?.title ?? "Module"}.pdf`;
