@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Upload, Search, Save, KeyRound } from "lucide-react";
+import { Upload, Search, Save, KeyRound, Award, Download } from "lucide-react";
 
 const passwordSchema = z
   .object({
@@ -133,6 +133,8 @@ export default function Personnel() {
         {me && <PersonnelForm value={me} onSave={save} />}
 
         <ChangePasswordCard />
+
+        <CertificatesCard />
 
         {isAdmin && (
           <Card>
@@ -294,6 +296,88 @@ function ChangePasswordCard() {
             </Button>
           </div>
         </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface Certificate {
+  id: string;
+  module_id: string;
+  storage_path: string;
+  issued_at: string;
+  modules: { title: string } | null;
+}
+
+function CertificatesCard() {
+  const [certs, setCerts] = useState<Certificate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("module_certificates")
+        .select("id, module_id, storage_path, issued_at, modules(title)")
+        .order("issued_at", { ascending: false });
+      if (error) toast.error(error.message);
+      setCerts((data as any) ?? []);
+      setLoading(false);
+    })();
+  }, []);
+
+  const download = async (cert: Certificate) => {
+    setDownloadingId(cert.id);
+    try {
+      const { data, error } = await supabase.storage.from("certificates").download(cert.storage_path);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Certificate - ${cert.modules?.title ?? "Module"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error(err.message ?? "Error downloading certificate");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Award className="h-4 w-4" /> My Certificates
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : certs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No certificates yet. Score at least 50% on a module's knowledge assessment to earn one.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border -mx-6">
+            {certs.map((c) => (
+              <li key={c.id} className="px-6 py-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-medium text-sm truncate">{c.modules?.title ?? "Module"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Issued {new Date(c.issued_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" disabled={downloadingId === c.id} onClick={() => download(c)}>
+                  <Download className="h-3.5 w-3.5 mr-1" />
+                  {downloadingId === c.id ? "Downloading…" : "Download"}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardContent>
     </Card>
   );

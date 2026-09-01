@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { ModuleSelect } from "@/components/ModuleSelect";
 import { toast } from "sonner";
 
 interface Eval {
@@ -21,6 +22,7 @@ interface Eval {
   mode: "individual" | "group";
   scheduled_at: string | null;
   max_attempts: number;
+  module_id: string | null;
 }
 
 export default function AdminEvaluations() {
@@ -51,6 +53,7 @@ export default function AdminEvaluations() {
       single_attempt: !!editing.single_attempt,
       mode: editing.mode ?? "individual",
       max_attempts: Math.max(1, editing.max_attempts ?? 1),
+      module_id: editing.module_id ?? null,
     };
     if (editing.id) {
       const { error } = await supabase.from("evaluations").update(payload).eq("id", editing.id);
@@ -136,6 +139,20 @@ export default function AdminEvaluations() {
                     onChange={(e) => setEditing({ ...editing, max_attempts: Math.max(1, parseInt(e.target.value) || 1) })}
                   />
                   <p className="text-xs text-muted-foreground mt-1">Strict limit enforced server-side — the student cannot modify it.</p>
+                </div>
+                <div>
+                  <Label>Linked Module (optional)</Label>
+                  {courseId && (
+                    <ModuleSelect
+                      courseId={courseId}
+                      value={editing.module_id ?? null}
+                      onChange={(v) => setEditing({ ...editing, module_id: v })}
+                    />
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    If set, a participant scoring at least 50% on this assessment automatically earns a downloadable
+                    module validation certificate in their Profile.
+                  </p>
                 </div>
               </div>
               <DialogFooter>

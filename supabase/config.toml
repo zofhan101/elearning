@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.generate-jitsi-jwt]
 verify_jwt = true
+
+[functions.generate-module-certificate]
+verify_jwt = true

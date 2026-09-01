@@ -113,6 +113,22 @@ export default function Quiz() {
       .from("attempts")
       .update({ submitted_at: new Date().toISOString(), score, max_score: totalPoints })
       .eq("id", attemptId!);
+
+    // If this assessment is linked to a module and the score qualifies,
+    // this issues a downloadable validation certificate (visible in the
+    // participant's Profile). Silently ignored if not applicable.
+    try {
+      const { data: certResult } = await supabase.functions.invoke("generate-module-certificate", {
+        body: { attempt_id: attemptId },
+      });
+      if (certResult?.issued && !certResult?.already_existed) {
+        toast.success("🎉 Module validated — your certificate is now available in My Profile.");
+      }
+    } catch {
+      // non-critical: certificate issuance failure should not block the
+      // student from seeing their quiz result
+    }
+
     if (auto) toast.info("Time is up — questionnaire submitted automatically.");
     navigate(`/resultat/${attemptId}`);
   };
