@@ -64,13 +64,6 @@ Deno.serve(async (req) => {
       return json({ issued: false, reason: "not_module_linked" });
     }
 
-    const maxScore = Number(attempt.max_score ?? 0);
-    const score = Number(attempt.score ?? 0);
-    const passed = maxScore > 0 && score / maxScore >= 0.5;
-    if (!passed) {
-      return json({ issued: false, reason: "not_passing" });
-    }
-
     // Idempotent: if a certificate already exists for this user+module,
     // just return it instead of generating a duplicate.
     const { data: existing } = await admin
@@ -81,6 +74,57 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (existing) {
       return json({ issued: true, already_existed: true, storage_path: existing.storage_path });
+    }
+
+    // A module can have several linked "knowledge" assessments. The
+    // participant must complete ALL of them, and validates the module
+    // when their SUMMED score across every one of them reaches 50% of the
+    // SUMMED total points — not 50% on any single assessment individually.
+    const { data: moduleEvals, error: moduleEvalsErr } = await admin
+      .from("evaluations")
+      .select("id")
+      .eq("module_id", evaluation.module_id);
+    if (moduleEvalsErr) return json({ error: moduleEvalsErr.message }, 500);
+
+    const evalIds = (moduleEvals ?? []).map((e: any) => e.id);
+    if (evalIds.length === 0) {
+      return json({ issued: false, reason: "not_passing" });
+    }
+
+    // The participant's most recent submitted attempt counts for each
+    // linked assessment.
+    const { data: attempts, error: attemptsErr } = await admin
+      .from("attempts")
+      .select("evaluation_id, score, max_score, submitted_at")
+      .eq("user_id", caller.id)
+      .in("evaluation_id", evalIds)
+      .not("submitted_at", "is", null)
+      .order("submitted_at", { ascending: false });
+    if (attemptsErr) return json({ error: attemptsErr.message }, 500);
+
+    const latestByEval = new Map<string, { score: number; max_score: number }>();
+    for (const a of attempts ?? []) {
+      if (!latestByEval.has(a.evaluation_id)) {
+        latestByEval.set(a.evaluation_id, { score: Number(a.score ?? 0), max_score: Number(a.max_score ?? 0) });
+      }
+    }
+
+    // Every assessment linked to this module must have been attempted at
+    // least once before the module can be validated.
+    const allAttempted = evalIds.every((id: string) => latestByEval.has(id));
+    if (!allAttempted) {
+      return json({ issued: false, reason: "assessments_incomplete" });
+    }
+
+    let totalScore = 0;
+    let totalMax = 0;
+    for (const v of latestByEval.values()) {
+      totalScore += v.score;
+      totalMax += v.max_score;
+    }
+    const passed = totalMax > 0 && totalScore / totalMax >= 0.5;
+    if (!passed) {
+      return json({ issued: false, reason: "not_passing" });
     }
 
     const { data: moduleRow } = await admin
