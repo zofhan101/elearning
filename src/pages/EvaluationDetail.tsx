@@ -36,7 +36,7 @@ export default function EvaluationDetail() {
 
   const start = async () => {
     const max = ev.max_attempts ?? 1;
-    if (attemptsCount >= max) {
+    if (max !== 0 && attemptsCount >= max) {
       toast.error(`Maximum number of attempts reached (${max}).`);
       return;
     }
@@ -55,7 +55,8 @@ export default function EvaluationDetail() {
   if (!ev) return null;
   const submitted = previousAttempt?.submitted_at;
   const maxAttempts = ev.max_attempts ?? 1;
-  const blocked = (submitted && ev.single_attempt) || attemptsCount >= maxAttempts;
+  const unlimited = maxAttempts === 0;
+  const blocked = (submitted && ev.single_attempt) || (!unlimited && attemptsCount >= maxAttempts);
 
   return (
     <AppLayout>
@@ -97,7 +98,7 @@ export default function EvaluationDetail() {
           {ev.single_attempt && (
             <Row strong="One attempt only" sub="Once this questionnaire is submitted, it will no longer be possible to answer it again." />
           )}
-          <Row strong={`Attempts allowed: ${maxAttempts}`} sub={`You have used ${attemptsCount} attempt${attemptsCount > 1 ? "s" : ""}.`} />
+          <Row strong={`Attempts allowed: ${unlimited ? "Unlimited" : maxAttempts}`} sub={`You have used ${attemptsCount} attempt${attemptsCount > 1 ? "s" : ""}.`} />
           <Row strong="Additional Information" sub="No documents allowed." />
         </section>
 

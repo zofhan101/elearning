@@ -1,0 +1,30 @@
+-- Allow "unlimited attempts" on an assessment by using max_attempts = 0
+-- as a sentinel value (instead of a literal attempt count), so the
+-- server-side trigger no longer blocks retries once a student has
+-- exhausted a specific number of tries. Used together with the module
+-- certificate feature: participants keep retrying an assessment until
+-- they reach the required score.
+CREATE OR REPLACE FUNCTION public.enforce_max_attempts()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  max_a integer;
+  used integer;
+BEGIN
+  SELECT max_attempts INTO max_a FROM public.evaluations WHERE id = NEW.evaluation_id;
+  IF max_a IS NULL THEN max_a := 1; END IF;
+  IF max_a = 0 THEN RETURN NEW; END IF; -- 0 = unlimited attempts
+
+  SELECT count(*) INTO used FROM public.attempts
+    WHERE evaluation_id = NEW.evaluation_id
+      AND user_id = NEW.user_id
+      AND submitted_at IS NOT NULL;
+  IF used >= max_a THEN
+    RAISE EXCEPTION 'Nombre maximum de tentatives atteint (%).', max_a;
+  END IF;
+  RETURN NEW;
+END;
+$$;

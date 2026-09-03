@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { ModuleSelect } from "@/components/ModuleSelect";
 import { toast } from "sonner";
@@ -52,7 +53,7 @@ export default function AdminEvaluations() {
       duration_minutes: editing.duration_minutes ?? 30,
       single_attempt: !!editing.single_attempt,
       mode: editing.mode ?? "individual",
-      max_attempts: Math.max(1, editing.max_attempts ?? 1),
+      max_attempts: Math.max(0, editing.max_attempts ?? 1),
       module_id: editing.module_id ?? null,
     };
     if (editing.id) {
@@ -132,12 +133,29 @@ export default function AdminEvaluations() {
                 </div>
                 <div>
                   <Label>Maximum Number of Attempts</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={editing.max_attempts ?? 1}
-                    onChange={(e) => setEditing({ ...editing, max_attempts: Math.max(1, parseInt(e.target.value) || 1) })}
-                  />
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={editing.max_attempts === 0 ? "" : editing.max_attempts ?? 1}
+                      disabled={editing.max_attempts === 0}
+                      placeholder={editing.max_attempts === 0 ? "Unlimited" : undefined}
+                      onChange={(e) => setEditing({ ...editing, max_attempts: Math.max(1, parseInt(e.target.value) || 1) })}
+                    />
+                    <label className="flex items-center gap-2 text-sm whitespace-nowrap">
+                      <Checkbox
+                        checked={editing.max_attempts === 0}
+                        onCheckedChange={(checked) =>
+                          setEditing({
+                            ...editing,
+                            max_attempts: checked ? 0 : 1,
+                            single_attempt: checked ? false : editing.single_attempt,
+                          })
+                        }
+                      />
+                      Unlimited
+                    </label>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">Strict limit enforced server-side — the student cannot modify it.</p>
                 </div>
                 <div>

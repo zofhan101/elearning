@@ -124,31 +124,37 @@ Deno.serve(async (req) => {
       return json({ issued: false, reason: "not_passing" });
     }
 
-    // The participant's most recent submitted attempt counts for each
-    // linked assessment.
+    // Every submitted attempt counts, and the participant's BEST attempt
+    // (highest percentage) is used for each linked assessment — since
+    // multiple retries are now allowed, a later weaker attempt should
+    // never erase a previously earned good score.
     const { data: attempts, error: attemptsErr } = await admin
       .from("attempts")
       .select("evaluation_id, score, max_score, submitted_at")
       .eq("user_id", caller.id)
       .in("evaluation_id", evalIds)
-      .not("submitted_at", "is", null)
-      .order("submitted_at", { ascending: false });
+      .not("submitted_at", "is", null);
     if (attemptsErr) {
       console.error(`[cert] attempts fetch error: ${attemptsErr.message}`);
       return json({ error: attemptsErr.message }, 500);
     }
 
-    const latestByEval = new Map<string, { score: number; max_score: number }>();
+    const bestByEval = new Map<string, { score: number; max_score: number }>();
     for (const a of attempts ?? []) {
-      if (!latestByEval.has(a.evaluation_id)) {
-        latestByEval.set(a.evaluation_id, { score: Number(a.score ?? 0), max_score: Number(a.max_score ?? 0) });
+      const score = Number(a.score ?? 0);
+      const maxScore = Number(a.max_score ?? 0);
+      const pct = maxScore > 0 ? score / maxScore : 0;
+      const current = bestByEval.get(a.evaluation_id);
+      const currentPct = current && current.max_score > 0 ? current.score / current.max_score : -1;
+      if (!current || pct > currentPct) {
+        bestByEval.set(a.evaluation_id, { score, max_score: maxScore });
       }
     }
-    console.error(`[cert] found submitted attempts for ${latestByEval.size}/${evalIds.length} of the linked assessments`);
+    console.error(`[cert] found submitted attempts for ${bestByEval.size}/${evalIds.length} of the linked assessments`);
 
     // Every assessment linked to this module must have been attempted at
     // least once before the module can be validated.
-    const allAttempted = evalIds.every((id: string) => latestByEval.has(id));
+    const allAttempted = evalIds.every((id: string) => bestByEval.has(id));
     if (!allAttempted) {
       console.error("[cert] STOP: not every linked assessment has a submitted attempt yet");
       return json({ issued: false, reason: "assessments_incomplete" });
@@ -156,14 +162,14 @@ Deno.serve(async (req) => {
 
     let totalScore = 0;
     let totalMax = 0;
-    for (const v of latestByEval.values()) {
+    for (const v of bestByEval.values()) {
       totalScore += v.score;
       totalMax += v.max_score;
     }
-    console.error(`[cert] aggregate score = ${totalScore}/${totalMax}`);
-    const passed = totalMax > 0 && totalScore / totalMax >= 0.5;
+    console.error(`[cert] aggregate best score = ${totalScore}/${totalMax}`);
+    const passed = totalMax > 0 && totalScore / totalMax >= 0.8;
     if (!passed) {
-      console.error("[cert] STOP: aggregate score below 50%");
+      console.error("[cert] STOP: aggregate score below 80%");
       return json({ issued: false, reason: "not_passing" });
     }
     console.error("[cert] PASSED — generating certificate PDF");
