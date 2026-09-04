@@ -318,7 +318,7 @@ function CertificatesCard() {
     (async () => {
       const { data, error } = await supabase
         .from("module_certificates")
-        .select("id, module_id, storage_path, issued_at, modules(title)")
+        .select("id, module_id, storage_path, issued_at, modules:courses(title)")
         .order("issued_at", { ascending: false });
       if (error) toast.error(error.message);
       setCerts((data as any) ?? []);

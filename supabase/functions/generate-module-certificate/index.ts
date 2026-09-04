@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
 
     const { data: evaluation, error: evalErr } = await admin
       .from("evaluations")
-      .select("id, title, module_id")
+      .select("id, title, course_id, counts_toward_certificate")
       .eq("id", attempt.evaluation_id)
       .maybeSingle();
     if (evalErr) {
@@ -83,11 +83,12 @@ Deno.serve(async (req) => {
       console.error("[cert] evaluation not found");
       return json({ error: "Assessment not found" }, 404);
     }
-    console.error(`[cert] evaluation "${evaluation.title}" module_id=${evaluation.module_id ?? "NULL"}`);
+    console.error(`[cert] evaluation "${evaluation.title}" course_id=${evaluation.course_id} counts_toward_certificate=${evaluation.counts_toward_certificate}`);
 
-    if (!evaluation.module_id) {
-      // Not a module-linked assessment — nothing to certify, not an error.
-      console.error("[cert] STOP: evaluation has no module_id — not eligible for a certificate");
+    if (!evaluation.counts_toward_certificate) {
+      // Not flagged as counting toward the module certificate — nothing
+      // to certify, not an error.
+      console.error("[cert] STOP: evaluation does not count toward a certificate");
       return json({ issued: false, reason: "not_module_linked" });
     }
 
@@ -97,21 +98,23 @@ Deno.serve(async (req) => {
       .from("module_certificates")
       .select("storage_path, issued_at")
       .eq("user_id", caller.id)
-      .eq("module_id", evaluation.module_id)
+      .eq("module_id", evaluation.course_id)
       .maybeSingle();
     if (existing) {
       console.error(`[cert] STOP: certificate already exists at ${existing.storage_path}`);
       return json({ issued: true, already_existed: true, storage_path: existing.storage_path });
     }
 
-    // A module can have several linked "knowledge" assessments. The
+    // A module (UI term for a courses-table row) can have several
+    // assessments flagged as counting toward the certificate. The
     // participant must complete ALL of them, and validates the module
-    // when their SUMMED score across every one of them reaches 50% of the
-    // SUMMED total points — not 50% on any single assessment individually.
+    // when their SUMMED best score across every one of them reaches 80%
+    // of the SUMMED total points.
     const { data: moduleEvals, error: moduleEvalsErr } = await admin
       .from("evaluations")
       .select("id")
-      .eq("module_id", evaluation.module_id);
+      .eq("course_id", evaluation.course_id)
+      .eq("counts_toward_certificate", true);
     if (moduleEvalsErr) {
       console.error(`[cert] moduleEvals fetch error: ${moduleEvalsErr.message}`);
       return json({ error: moduleEvalsErr.message }, 500);
@@ -175,9 +178,9 @@ Deno.serve(async (req) => {
     console.error("[cert] PASSED — generating certificate PDF");
 
     const { data: moduleRow } = await admin
-      .from("modules")
+      .from("courses")
       .select("title")
-      .eq("id", evaluation.module_id)
+      .eq("id", evaluation.course_id)
       .maybeSingle();
 
     const { data: personnel } = await admin
@@ -198,7 +201,7 @@ Deno.serve(async (req) => {
 
     const pdfBytes = await buildCertificatePdf({ participantName, country, moduleTitle, totalScore, totalMax });
 
-    const storagePath = `${caller.id}/${evaluation.module_id}.pdf`;
+    const storagePath = `${caller.id}/${evaluation.course_id}.pdf`;
     const { error: uploadErr } = await admin.storage
       .from("certificates")
       .upload(storagePath, pdfBytes, { contentType: "application/pdf", upsert: true });
@@ -209,7 +212,7 @@ Deno.serve(async (req) => {
 
     const { error: insertErr } = await admin.from("module_certificates").insert({
       user_id: caller.id,
-      module_id: evaluation.module_id,
+      module_id: evaluation.course_id,
       evaluation_id: evaluation.id,
       attempt_id: attempt.id,
       storage_path: storagePath,

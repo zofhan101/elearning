@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor } from "@/components/RichTextEditor";
-import { ModuleSelect } from "@/components/ModuleSelect";
 import { toast } from "sonner";
 
 interface Eval {
@@ -23,7 +22,7 @@ interface Eval {
   mode: "individual" | "group";
   scheduled_at: string | null;
   max_attempts: number;
-  module_id: string | null;
+  counts_toward_certificate: boolean;
 }
 
 export default function AdminEvaluations() {
@@ -54,7 +53,7 @@ export default function AdminEvaluations() {
       single_attempt: !!editing.single_attempt,
       mode: editing.mode ?? "individual",
       max_attempts: Math.max(0, editing.max_attempts ?? 1),
-      module_id: editing.module_id ?? null,
+      counts_toward_certificate: !!editing.counts_toward_certificate,
     };
     if (editing.id) {
       const { error } = await supabase.from("evaluations").update(payload).eq("id", editing.id);
@@ -159,17 +158,17 @@ export default function AdminEvaluations() {
                   <p className="text-xs text-muted-foreground mt-1">Strict limit enforced server-side — the student cannot modify it.</p>
                 </div>
                 <div>
-                  <Label>Linked Module (optional)</Label>
-                  {courseId && (
-                    <ModuleSelect
-                      courseId={courseId}
-                      value={editing.module_id ?? null}
-                      onChange={(v) => setEditing({ ...editing, module_id: v })}
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={!!editing.counts_toward_certificate}
+                      onCheckedChange={(checked) => setEditing({ ...editing, counts_toward_certificate: !!checked })}
                     />
-                  )}
+                    Counts toward this module's validation certificate
+                  </label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    If set, a participant scoring at least 50% on this assessment automatically earns a downloadable
-                    module validation certificate in their Profile.
+                    If checked, a participant reaching an aggregate score of at least 80% across all assessments
+                    checked this way (within this same module) earns a downloadable validation certificate in their
+                    Profile.
                   </p>
                 </div>
               </div>
