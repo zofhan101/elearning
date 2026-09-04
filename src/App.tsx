@@ -31,6 +31,7 @@ import Personnel from "./pages/Personnel";
 import AdminCohorts from "./pages/AdminCohorts";
 import AdminMembers from "./pages/AdminMembers";
 import AdminSiteSettings from "./pages/AdminSiteSettings";
+import AdminStatistics from "./pages/AdminStatistics";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/admin/cohortes" element={<RequireRole allow="staff"><AdminCohorts /></RequireRole>} />
             <Route path="/admin/membres" element={<RequireRole allow="admin"><AdminMembers /></RequireRole>} />
             <Route path="/admin/parametres" element={<RequireRole allow="admin"><AdminSiteSettings /></RequireRole>} />
+            <Route path="/admin/statistiques" element={<RequireRole allow="admin"><AdminStatistics /></RequireRole>} />
             <Route path="/admin/cours/:courseId/modules" element={<RequireRole allow="staff"><AdminModules /></RequireRole>} />
             <Route path="/admin/cours/:courseId/modules/:moduleId/contenus" element={<RequireRole allow="staff"><AdminContents /></RequireRole>} />
             <Route path="/admin/cours/:courseId/evaluations" element={<RequireRole allow="staff"><AdminEvaluations /></RequireRole>} />

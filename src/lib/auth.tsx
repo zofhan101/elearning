@@ -36,7 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) loadRoles(s.user.id);
+      if (s?.user) {
+        loadRoles(s.user.id);
+        // Fire-and-forget: records one visit for today, incrementing if
+        // already recorded. Failure here should never block the app.
+        supabase.rpc("record_login_event").then(({ error }) => {
+          if (error) console.error("record_login_event failed:", error.message);
+        });
+      }
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();

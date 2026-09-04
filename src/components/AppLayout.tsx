@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, Info, ExternalLink, Settings, ChevronDown, IdCard, Menu, Image as ImageIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, Info, ExternalLink, Settings, ChevronDown, IdCard, Menu, Image as ImageIcon, BarChart3 } from "lucide-react";
 import logoFmm from "@/assets/logo-fmm.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       <ImageIcon className="h-4 w-4 mr-2" />Site Settings
                     </DropdownMenuItem>
                   )}
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate("/admin/statistiques")}>
+                      <BarChart3 className="h-4 w-4 mr-2" />Statistics
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -113,6 +118,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   )}
                   {isAdmin && (
                     <MobileItem onClick={() => go("/admin/parametres")} icon={<ImageIcon className="h-4 w-4" />} label="Site Settings" />
+                  )}
+                  {isAdmin && (
+                    <MobileItem onClick={() => go("/admin/statistiques")} icon={<BarChart3 className="h-4 w-4" />} label="Statistics" />
                   )}
                 </>
               )}

@@ -30,7 +30,7 @@ function iconForUrl(url?: string | null) {
 
 export default function CourseModules() {
   const { id } = useParams();
-  const { isStaff } = useAuth();
+  const { user, isStaff } = useAuth();
   const [modules, setModules] = useState<any[]>([]);
   const [openModule, setOpenModule] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Record<string, any[]>>({});
@@ -39,8 +39,16 @@ export default function CourseModules() {
   const toggleBlock = (id: string) => {
     setOpenBlocks((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        // Fire-and-forget engagement tracking, only on expand (not
+        // collapse) — failures here should never disrupt the student.
+        if (user) {
+          supabase.from("content_views").insert({ user_id: user.id, content_block_id: id }).then();
+        }
+      }
       return next;
     });
   };
