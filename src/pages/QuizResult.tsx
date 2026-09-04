@@ -37,7 +37,7 @@ export default function QuizResult() {
   if (!attempt || !ev) return null;
   const pct = attempt.max_score ? Math.round((attempt.score / attempt.max_score) * 100) : 0;
   const isPerfect = pct === 100;
-  const isCertUnlocked = pct >= 80 && !!ev.module_id;
+  const isCertUnlocked = pct >= 80 && !!ev.counts_toward_certificate;
   const showAnswerKey = pct >= 80;
 
   return (
