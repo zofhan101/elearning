@@ -15,6 +15,7 @@ export default function EvaluationDetail() {
   const [questionsCount, setQ] = useState(0);
   const [previousAttempt, setPrev] = useState<any>(null);
   const [attemptsCount, setAttemptsCount] = useState(0);
+  const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -31,6 +32,7 @@ export default function EvaluationDetail() {
         .order("started_at", { ascending: false });
       setPrev(a?.[0] ?? null);
       setAttemptsCount((a ?? []).filter((x: any) => x.submitted_at).length);
+      setHistory((a ?? []).filter((x: any) => x.submitted_at));
     })();
   }, [id, user]);
 
@@ -56,7 +58,8 @@ export default function EvaluationDetail() {
   const submitted = previousAttempt?.submitted_at;
   const maxAttempts = ev.max_attempts ?? 1;
   const unlimited = maxAttempts === 0;
-  const blocked = (submitted && ev.single_attempt) || (!unlimited && attemptsCount >= maxAttempts);
+  const hasPerfectScore = history.some((h) => h.max_score > 0 && h.score === h.max_score);
+  const blocked = hasPerfectScore || (submitted && ev.single_attempt) || (!unlimited && attemptsCount >= maxAttempts);
 
   return (
     <AppLayout>
@@ -106,8 +109,10 @@ export default function EvaluationDetail() {
           {blocked ? (
             <div className="flex items-center gap-2 text-sm text-success">
               <CheckCircle2 className="h-5 w-5" />
-              You have already submitted this questionnaire
-              {previousAttempt.score !== null && ` — score: ${previousAttempt.score}/${previousAttempt.max_score}`}
+              {hasPerfectScore
+                ? "Perfect score achieved — this assessment is now complete."
+                : "You have already submitted this questionnaire"}
+              {!hasPerfectScore && previousAttempt.score !== null && ` — score: ${previousAttempt.score}/${previousAttempt.max_score}`}
             </div>
           ) : (
             <>
@@ -120,6 +125,27 @@ export default function EvaluationDetail() {
             </>
           )}
         </div>
+
+        {history.length > 0 && (
+          <section className="surface-card p-6 mt-8">
+            <h2 className="font-semibold mb-3">Attempt History</h2>
+            <div className="divide-y divide-border">
+              {history.map((h, i) => {
+                const hPct = h.max_score > 0 ? Math.round((h.score / h.max_score) * 100) : 0;
+                return (
+                  <div key={h.id} className="py-2.5 flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Attempt {history.length - i} — {new Date(h.submitted_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                    </span>
+                    <span className="font-medium tabular-nums">
+                      {h.score}/{h.max_score} ({hPct}%)
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </div>
     </AppLayout>
   );
