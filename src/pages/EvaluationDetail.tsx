@@ -59,7 +59,8 @@ export default function EvaluationDetail() {
   const maxAttempts = ev.max_attempts ?? 1;
   const unlimited = maxAttempts === 0;
   const hasPerfectScore = history.some((h) => h.max_score > 0 && h.score === h.max_score);
-  const blocked = hasPerfectScore || (submitted && ev.single_attempt) || (!unlimited && attemptsCount >= maxAttempts);
+  const hasFinalized = history.some((h) => h.finalized);
+  const blocked = hasPerfectScore || hasFinalized || (submitted && ev.single_attempt) || (!unlimited && attemptsCount >= maxAttempts);
 
   return (
     <AppLayout>
@@ -111,8 +112,10 @@ export default function EvaluationDetail() {
               <CheckCircle2 className="h-5 w-5" />
               {hasPerfectScore
                 ? "Perfect score achieved — this assessment is now complete."
+                : hasFinalized
+                ? "Assessment finalized — this assessment is now complete."
                 : "You have already submitted this questionnaire"}
-              {!hasPerfectScore && previousAttempt.score !== null && ` — score: ${previousAttempt.score}/${previousAttempt.max_score}`}
+              {!hasPerfectScore && !hasFinalized && previousAttempt.score !== null && ` — score: ${previousAttempt.score}/${previousAttempt.max_score}`}
             </div>
           ) : (
             <>

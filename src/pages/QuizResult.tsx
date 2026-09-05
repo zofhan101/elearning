@@ -40,6 +40,11 @@ export default function QuizResult() {
   const isCertUnlocked = pct >= 80 && !!ev.counts_toward_certificate;
   const showAnswerKey = pct >= 80;
 
+  const finalize = async () => {
+    await supabase.from("attempts").update({ finalized: true }).eq("id", attempt.id);
+    navigate(`/cours/${ev.course_id}/evaluations`);
+  };
+
   return (
     <AppLayout>
       <div className="container max-w-3xl py-10">
@@ -87,7 +92,7 @@ export default function QuizResult() {
                         <Button variant="outline" onClick={() => navigate(`/evaluation/${ev.id}`)}>
                           Continue Attempting
                         </Button>
-                        <Button onClick={() => navigate(`/cours/${ev.course_id}/evaluations`)}>
+                        <Button onClick={finalize}>
                           Finalize Assessment
                         </Button>
                       </div>
