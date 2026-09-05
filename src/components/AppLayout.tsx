@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, LogOut, User as UserIcon, Compass, ShieldCheck, Info, ExternalLink, Settings, ChevronDown, IdCard, Menu, Image as ImageIcon, BarChart3 } from "lucide-react";
+import { LayoutDashboard, LogOut, User as UserIcon, Compass, Info, ExternalLink, Settings, ChevronDown, IdCard, Menu, Image as ImageIcon, BarChart3 } from "lucide-react";
 import logoFmm from "@/assets/logo-fmm.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -52,11 +52,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <DropdownMenuItem onClick={() => navigate("/admin/cohortes")}>Cohorts</DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem onClick={() => navigate("/admin/membres")}>Members</DropdownMenuItem>
-                  )}
-                  {isAdmin && (
-                    <DropdownMenuItem onClick={() => navigate("/admin/inscriptions")}>
-                      <ShieldCheck className="h-4 w-4 mr-2" />Signup Requests
-                    </DropdownMenuItem>
                   )}
                   {isAdmin && (
                     <DropdownMenuItem onClick={() => navigate("/admin/parametres")}>
@@ -112,9 +107,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <MobileItem onClick={() => go("/admin/cohortes")} icon={<Settings className="h-4 w-4" />} label="Cohorts" />
                   {isAdmin && (
                     <MobileItem onClick={() => go("/admin/membres")} icon={<IdCard className="h-4 w-4" />} label="Members" />
-                  )}
-                  {isAdmin && (
-                    <MobileItem onClick={() => go("/admin/inscriptions")} icon={<ShieldCheck className="h-4 w-4" />} label="Signup Requests" />
                   )}
                   {isAdmin && (
                     <MobileItem onClick={() => go("/admin/parametres")} icon={<ImageIcon className="h-4 w-4" />} label="Site Settings" />
