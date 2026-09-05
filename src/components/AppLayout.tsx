@@ -23,7 +23,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-md print:hidden">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src={logoFmm} alt="Faculty of Medicine Antananarivo" className="h-10 w-10 object-contain" />
@@ -131,7 +131,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-border bg-card mt-12">
+      <footer className="border-t border-border bg-card mt-12 print:hidden">
         <div className="container py-6 text-xs text-muted-foreground flex flex-wrap gap-x-6 gap-y-2 justify-between">
           <div className="flex flex-wrap gap-x-4">
             <span>Contact us</span>
