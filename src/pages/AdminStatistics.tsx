@@ -8,7 +8,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Globe2, Eye, Activity, Printer } from "lucide-react";
+import { Globe2, Eye, Activity, Printer, ListChecks } from "lucide-react";
 
 const MENTION_LABELS: Record<string, string> = {
   blended_learning: "Blended Learning",
@@ -55,23 +55,30 @@ export default function AdminStatistics() {
   const [personnel, setPersonnel] = useState<any[]>([]);
   const [views, setViews] = useState<any[]>([]);
   const [logins, setLogins] = useState<any[]>([]);
+  const [visits, setVisits] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isAdmin) return;
     (async () => {
       setLoading(true);
-      const [p, v, l] = await Promise.all([
-        supabase.from("personnel").select("mention, parcours, member_role"),
+      const [p, v, l, cv] = await Promise.all([
+        supabase.from("personnel").select("id, nom, prenom, mention, parcours, member_role"),
         supabase
           .from("content_views")
           .select("id, viewed_at, content_block_id, content_blocks(title, kind)")
           .order("viewed_at", { ascending: false })
           .limit(5000),
         supabase.from("login_events").select("user_id, day, visits").order("day", { ascending: true }),
+        supabase
+          .from("course_visits")
+          .select("id, user_id, entered_at, last_active_at, courses(title)")
+          .order("entered_at", { ascending: false })
+          .limit(200),
       ]);
       setPersonnel(p.data ?? []);
       setViews(v.data ?? []);
       setLogins(l.data ?? []);
+      setVisits(cv.data ?? []);
       setLoading(false);
     })();
   }, [isAdmin]);
@@ -132,6 +139,41 @@ export default function AdminStatistics() {
       month: uniq(monthAgo),
     };
   }, [logins]);
+
+  // --- Activity log (per-visit trace: who, country, module, duration) ---
+  const personnelById = useMemo(() => {
+    const map = new Map<string, any>();
+    for (const p of personnel) map.set(p.id, p);
+    return map;
+  }, [personnel]);
+
+  const activityLog = useMemo(() => {
+    return visits.map((v) => {
+      const p = personnelById.get(v.user_id);
+      const name = p ? [p.prenom, p.nom].filter(Boolean).join(" ") || p.nom : "Unknown";
+      const country = p?.parcours ? PARCOURS_LABELS[p.parcours] ?? p.parcours : "—";
+      const enteredAt = new Date(v.entered_at);
+      const lastActiveAt = new Date(v.last_active_at);
+      const durationSec = Math.max(0, Math.round((lastActiveAt.getTime() - enteredAt.getTime()) / 1000));
+      return {
+        id: v.id,
+        name,
+        country,
+        moduleTitle: v.courses?.title ?? "—",
+        enteredAt,
+        durationSec,
+      };
+    });
+  }, [visits, personnelById]);
+
+  const formatDuration = (sec: number) => {
+    if (sec < 60) return "< 1 min";
+    const min = Math.round(sec / 60);
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${h}h${m > 0 ? ` ${m}min` : ""}`;
+  };
 
   if (!isAdmin) {
     return (
@@ -262,6 +304,46 @@ export default function AdminStatistics() {
                   <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ChartCard>
+            </section>
+
+            {/* Activity log */}
+            <section className="print:break-before-page">
+              <h2 className="font-semibold flex items-center gap-2 mb-4"><ListChecks className="h-4 w-4" /> Activity Log</h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                Most recent module visits. Duration is approximate (based on periodic activity pings while the page
+                stays open) — closing a tab early may slightly undercount time spent.
+              </p>
+              <div className="surface-card overflow-x-auto print:break-inside-avoid">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs text-muted-foreground uppercase tracking-wider">
+                      <th className="p-3">Participant</th>
+                      <th className="p-3">Country</th>
+                      <th className="p-3">Module Visited</th>
+                      <th className="p-3">Date</th>
+                      <th className="p-3">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activityLog.length === 0 ? (
+                      <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">No visits recorded yet.</td></tr>
+                    ) : (
+                      activityLog.map((a) => (
+                        <tr key={a.id} className="border-b border-border last:border-0">
+                          <td className="p-3">{a.name}</td>
+                          <td className="p-3">{a.country}</td>
+                          <td className="p-3">{a.moduleTitle}</td>
+                          <td className="p-3 text-muted-foreground">
+                            {a.enteredAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
+                            {a.enteredAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                          <td className="p-3 tabular-nums">{formatDuration(a.durationSec)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </section>
           </>
         )}

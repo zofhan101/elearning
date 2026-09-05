@@ -54,6 +54,35 @@ export default function CourseModules() {
   };
 
   useEffect(() => {
+    if (!id || !user) return;
+    let visitId: string | null = null;
+    let heartbeat: ReturnType<typeof setInterval> | null = null;
+    let cancelled = false;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("course_visits")
+        .insert({ user_id: user.id, course_id: id })
+        .select("id")
+        .single();
+      if (cancelled || error || !data) return;
+      visitId = data.id;
+      // Heartbeat: as long as this page stays open and the tab is
+      // visible, nudge last_active_at forward every 20s so duration can
+      // be approximated as last_active_at - entered_at.
+      heartbeat = setInterval(() => {
+        if (document.visibilityState !== "visible" || !visitId) return;
+        supabase.from("course_visits").update({ last_active_at: new Date().toISOString() }).eq("id", visitId).then();
+      }, 20000);
+    })();
+
+    return () => {
+      cancelled = true;
+      if (heartbeat) clearInterval(heartbeat);
+    };
+  }, [id, user]);
+
+  useEffect(() => {
     if (!id) return;
     (async () => {
       const { data } = await supabase
