@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { CheckCircle2, XCircle, Trophy, PartyPopper, Award } from "lucide-react";
+import { CheckCircle2, XCircle, Trophy, PartyPopper, Award, Loader2, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { requestCertificate } from "@/lib/certificate";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
+
+type CertState = "idle" | "checking" | "ready" | "error";
 
 export default function QuizResult() {
   const { attemptId } = useParams();
@@ -11,6 +15,10 @@ export default function QuizResult() {
   const [attempt, setAttempt] = useState<any>(null);
   const [ev, setEv] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [certState, setCertState] = useState<CertState>("idle");
+  const [certMessage, setCertMessage] = useState<string | null>(null);
+  const [finalizing, setFinalizing] = useState(false);
+  const certTriggered = useRef(false);
 
   useEffect(() => {
     if (!attemptId) return;
@@ -34,6 +42,37 @@ export default function QuizResult() {
     })();
   }, [attemptId]);
 
+  // Ask the backend to issue the certificate as soon as a qualifying result
+  // is displayed. The call is idempotent, so it is safe on every visit and
+  // it recovers any case where the automatic call at submission failed.
+  useEffect(() => {
+    if (!attempt || !ev || certTriggered.current) return;
+    const percent = attempt.max_score ? Math.round((attempt.score / attempt.max_score) * 100) : 0;
+    if (percent < 80 || !ev.counts_toward_certificate) return;
+    certTriggered.current = true;
+    void runCertificate(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt, ev]);
+
+  /** Returns true when a certificate exists after the call. */
+  const runCertificate = async (announce: boolean): Promise<boolean> => {
+    if (!attempt) return false;
+    setCertState("checking");
+    setCertMessage(null);
+    const res = await requestCertificate(attempt.id);
+    if (res.issued) {
+      setCertState("ready");
+      if (!res.alreadyExisted || announce) {
+        toast.success("🎉 Module validated — your certificate is now available in My Profile.");
+      }
+      return true;
+    }
+    setCertState("error");
+    setCertMessage(res.message ?? "No certificate was issued.");
+    toast.error(res.message ?? "No certificate was issued.");
+    return false;
+  };
+
   if (!attempt || !ev) return null;
   const pct = attempt.max_score ? Math.round((attempt.score / attempt.max_score) * 100) : 0;
   const isPerfect = pct === 100;
@@ -41,9 +80,51 @@ export default function QuizResult() {
   const showAnswerKey = pct >= 80;
 
   const finalize = async () => {
-    await supabase.from("attempts").update({ finalized: true }).eq("id", attempt.id);
-    navigate(`/cours/${ev.course_id}/evaluations`);
+    if (finalizing) return;
+    setFinalizing(true);
+    try {
+      const { error } = await supabase.from("attempts").update({ finalized: true } as any).eq("id", attempt.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      // Make sure the certificate exists before leaving this page. If it
+      // could not be issued, stay here so the reason stays visible and the
+      // participant can retry (the assessment itself is already finalized).
+      if (certState !== "ready") {
+        const ok = await runCertificate(false);
+        if (!ok) return;
+      }
+      navigate(`/cours/${ev.course_id}/evaluations`);
+    } finally {
+      setFinalizing(false);
+    }
   };
+
+  const certStatus = (
+    <>
+      {certState === "checking" && (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground mt-3">
+          <Loader2 className="h-4 w-4 animate-spin" /> Generating your certificate…
+        </p>
+      )}
+      {certState === "ready" && (
+        <p className="flex items-center gap-2 text-sm text-success mt-3">
+          <CheckCircle2 className="h-4 w-4" /> Your certificate is ready in My Profile → My Certificates.
+        </p>
+      )}
+      {certState === "error" && (
+        <div className="mt-3 text-sm">
+          <p className="flex items-start gap-2 text-destructive">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" /> {certMessage}
+          </p>
+          <Button size="sm" variant="outline" className="mt-2" onClick={() => runCertificate(false)}>
+            Retry
+          </Button>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <AppLayout>
@@ -77,6 +158,7 @@ export default function QuizResult() {
                         available for download in your Profile. This assessment is now complete — no further
                         attempts are needed.
                       </p>
+                      {certStatus}
                       <Button className="mt-4" onClick={() => navigate(`/cours/${ev.course_id}/evaluations`)}>
                         Back to Assessments
                       </Button>
@@ -88,12 +170,13 @@ export default function QuizResult() {
                         Your module validation certificate is now unlocked and available for download in your
                         Profile. Would you like to keep attempting this assessment, or finalize it here?
                       </p>
+                      {certStatus}
                       <div className="flex flex-wrap gap-2 mt-4">
-                        <Button variant="outline" onClick={() => navigate(`/evaluation/${ev.id}`)}>
+                        <Button variant="outline" disabled={finalizing} onClick={() => navigate(`/evaluation/${ev.id}`)}>
                           Continue Attempting
                         </Button>
-                        <Button onClick={finalize}>
-                          Finalize Assessment
+                        <Button onClick={finalize} disabled={finalizing}>
+                          {finalizing ? "Finalizing…" : "Finalize Assessment"}
                         </Button>
                       </div>
                     </>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Clock, Eye, EyeOff, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { requestCertificate } from "@/lib/certificate";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,19 +115,16 @@ export default function Quiz() {
       .update({ submitted_at: new Date().toISOString(), score, max_score: totalPoints })
       .eq("id", attemptId!);
 
-    // If this assessment is linked to a module and the score qualifies,
-    // this issues a downloadable validation certificate (visible in the
-    // participant's Profile). Silently ignored if not applicable.
-    try {
-      const { data: certResult } = await supabase.functions.invoke("generate-module-certificate", {
-        body: { attempt_id: attemptId },
-      });
-      if (certResult?.issued && !certResult?.already_existed) {
-        toast.success("🎉 Module validated — your certificate is now available in My Profile.");
-      }
-    } catch {
-      // non-critical: certificate issuance failure should not block the
-      // student from seeing their quiz result
+    // If this assessment counts toward a module certificate and the score
+    // qualifies, this issues the downloadable validation certificate
+    // (visible in the participant's Profile). A technical failure never
+    // blocks the result page, but it is now reported instead of hidden;
+    // the result page also retries automatically (the call is idempotent).
+    const cert = await requestCertificate(attemptId!);
+    if (cert.issued && !cert.alreadyExisted) {
+      toast.success("🎉 Module validated — your certificate is now available in My Profile.");
+    } else if (cert.failed) {
+      toast.error(`Certificate could not be generated yet: ${cert.message}`);
     }
 
     if (auto) toast.info("Time is up — questionnaire submitted automatically.");
