@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Clock, User, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, Clock, User, AlertCircle, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { requestCertificate } from "@/lib/certificate";
 import { useAuth } from "@/lib/auth";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,43 @@ export default function EvaluationDetail() {
   const [previousAttempt, setPrev] = useState<any>(null);
   const [attemptsCount, setAttemptsCount] = useState(0);
   const [history, setHistory] = useState<any[]>([]);
+  const [certState, setCertState] = useState<"idle" | "checking" | "ready" | "error">("idle");
+  const [certMessage, setCertMessage] = useState<string | null>(null);
+  const certTriggered = useRef(false);
+
+  const bestAttempt = history.reduce<any | null>((best, h) => {
+    if (!(h.max_score > 0)) return best;
+    const pct = h.score / h.max_score;
+    return !best || pct > best.score / best.max_score ? h : best;
+  }, null);
+  const bestPct = bestAttempt ? Math.round((bestAttempt.score / bestAttempt.max_score) * 100) : 0;
+  const certEligible = !!ev?.counts_toward_certificate && bestPct >= 80;
+
+  const runCertificate = async () => {
+    if (!bestAttempt) return;
+    setCertState("checking");
+    setCertMessage(null);
+    const res = await requestCertificate(bestAttempt.id);
+    if (res.issued) {
+      setCertState("ready");
+      if (!res.alreadyExisted) {
+        toast.success("🎉 Module validated — your certificate is now available in My Profile.");
+      }
+    } else {
+      setCertState("error");
+      setCertMessage(res.message ?? "No certificate was issued.");
+    }
+  };
+
+  // A qualifying result (>= 80%) on an assessment that counts toward the
+  // module certificate: make sure the certificate exists. Idempotent, so it
+  // is safe on every visit and recovers any earlier failed generation.
+  useEffect(() => {
+    if (!certEligible || certTriggered.current) return;
+    certTriggered.current = true;
+    void runCertificate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [certEligible, bestAttempt?.id]);
 
   useEffect(() => {
     if (!id) return;
@@ -129,6 +167,31 @@ export default function EvaluationDetail() {
           )}
         </div>
 
+        {certEligible && certState !== "idle" && (
+          <div className="mt-4 text-sm">
+            {certState === "checking" && (
+              <p className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Checking your module certificate…
+              </p>
+            )}
+            {certState === "ready" && (
+              <p className="flex items-center gap-2 text-success">
+                <CheckCircle2 className="h-4 w-4" /> Your module certificate is available in My Profile → My Certificates.
+              </p>
+            )}
+            {certState === "error" && (
+              <div>
+                <p className="flex items-start gap-2 text-destructive">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" /> {certMessage}
+                </p>
+                <Button size="sm" variant="outline" className="mt-2" onClick={runCertificate}>
+                  Retry
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {history.length > 0 && (
           <section className="surface-card p-6 mt-8">
             <h2 className="font-semibold mb-3">Attempt History</h2>
@@ -136,12 +199,17 @@ export default function EvaluationDetail() {
               {history.map((h, i) => {
                 const hPct = h.max_score > 0 ? Math.round((h.score / h.max_score) * 100) : 0;
                 return (
-                  <div key={h.id} className="py-2.5 flex items-center justify-between text-sm">
+                  <div key={h.id} className="py-2.5 flex items-center justify-between gap-3 text-sm">
                     <span className="text-muted-foreground">
                       Attempt {history.length - i} — {new Date(h.submitted_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                     </span>
-                    <span className="font-medium tabular-nums">
-                      {h.score}/{h.max_score} ({hPct}%)
+                    <span className="flex items-center gap-3">
+                      <span className="font-medium tabular-nums">
+                        {h.score}/{h.max_score} ({hPct}%)
+                      </span>
+                      <Link to={`/resultat/${h.id}`} className="text-primary hover:underline">
+                        View results
+                      </Link>
                     </span>
                   </div>
                 );
