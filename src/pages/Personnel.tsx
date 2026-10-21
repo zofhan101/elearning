@@ -371,7 +371,7 @@ function CertificatesCard() {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : certs.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No certificates yet. Score at least 50% on a module's knowledge assessment to earn one.
+            No certificates yet. Reach a combined score of at least 80% across a module's assessments to earn one.
           </p>
         ) : (
           <ul className="divide-y divide-border -mx-6">
